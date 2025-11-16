@@ -11,8 +11,16 @@ import { Slider } from "@/components/(ui)/slider";
 import { useLanguageStore } from "@/lib/store";
 
 export default function Page() {
+  
+  // Variables y estados
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
+
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2025, 10)); // Noviembre 2025
+
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [adults, setAdults] = useState<number>(1);
@@ -37,6 +45,103 @@ export default function Page() {
   const handleReset = () => {
     setAdults(1);
     setRooms(1);
+  };
+
+  // Funciones parar calendario
+  const monthNames = locale === "es" 
+  ? ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+  : ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    return { daysInMonth, startingDayOfWeek };
+  };
+
+  const handleDateClick = (day: number, monthOffset: number = 0) => {
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth() + monthOffset;
+  const clickedDate = new Date(year, month, day);
+
+  if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
+    setSelectedStartDate(clickedDate);
+    setSelectedEndDate(null);
+  } else if (clickedDate > selectedStartDate) {
+    setSelectedEndDate(clickedDate);
+    setIsDatePickerOpen(false); // Cerrar el calendario
+  } else {
+    setSelectedStartDate(clickedDate);
+    setSelectedEndDate(null);
+  }
+};
+
+  const isDateInRange = (day: number, monthOffset: number = 0): boolean => {
+    if (!selectedStartDate || !selectedEndDate) return false;
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth() + monthOffset;
+    const date = new Date(year, month, day);
+    return date > selectedStartDate && date < selectedEndDate;
+  };
+
+  const isDateSelected = (day: number, monthOffset: number = 0): string | false => {
+    const year = currentMonth.getMonth() + monthOffset;
+    const date = new Date(currentMonth.getFullYear(), year, day);
+    if (selectedStartDate && date.toDateString() === selectedStartDate.toDateString()) return 'start';
+    if (selectedEndDate && date.toDateString() === selectedEndDate.toDateString()) return 'end';
+    return false;
+  };
+
+  const formatDate = (date: Date | null): string => {
+    if (!date) return '';
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()].slice(0, 3).toLowerCase();
+    return `${day} ${month}`;
+  };
+
+  const renderCalendar = (monthOffset: number = 0) => {
+    const displayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + monthOffset, 1);
+    const { daysInMonth, startingDayOfWeek } = getDaysInMonth(displayDate);
+    const days = [];
+
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10"></div>);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const selected = isDateSelected(day, monthOffset);
+      const inRange = isDateInRange(day, monthOffset);
+
+      days.push(
+        <button
+          key={day}
+          onClick={() => handleDateClick(day, monthOffset)}
+          className={`h-10 w-10 flex items-center justify-center rounded-full text-sm
+            ${selected === 'start' || selected === 'end' ? 'bg-[#0071C2] text-white font-bold' : ''}
+            ${inRange ? 'bg-[#E6F2FF]' : ''}
+            ${!selected && !inRange ? 'hover:bg-gray-100' : ''}
+            transition-colors`}
+        >
+          {day}
+        </button>
+      );
+    }
+
+    return days;
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
   
   const packages = [
@@ -162,26 +267,72 @@ export default function Page() {
               <Input placeholder={t("Destino", "Destination")} className="pl-10" />
             </div>
 
-            {/* FECHA DE SALIDA */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="date"
-                placeholder={t("Día de salida", "Departure day")}
-                className="pl-10"
-              />
-            </div>
+            <div className="relative md:col-span-2">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+                <button
+                  onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                  className="w-full h-10 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm"
+                >
+                  <span className="text-gray-700">
+                    {selectedStartDate && selectedEndDate
+                      ? `${formatDate(selectedStartDate)} - ${formatDate(selectedEndDate)}`
+                      : t("Llegada/salida", "Check-in/Check-out")}
+                  </span>
+                </button>
 
-            {/* FECHA DE LLEGADA */}
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="date"
-                placeholder={t("Día de llegada", "Arrival day")}
-                className="pl-10"
-              />
-            </div>
+                {/* CALENDARIO DESPLEGABLE */}
+                {isDatePickerOpen && (
+                  <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-2xl p-6 z-50 w-[700px]">
+                    <div className="flex gap-8">
+                      {/* MES 1 */}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-4">
+                          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full">
+                            ←
+                          </button>
+                          <h3 className="font-bold text-lg">
+                            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                          </h3>
+                          <div className="w-10"></div>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                          {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => (
+                            <div key={day} className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {renderCalendar(0)}
+                        </div>
+                      </div>
 
+                      {/* MES 2 */}
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-4">
+                          <div className="w-10"></div>
+                          <h3 className="font-bold text-lg">
+                            {monthNames[(currentMonth.getMonth() + 1) % 12]} {currentMonth.getMonth() === 11 ? currentMonth.getFullYear() + 1 : currentMonth.getFullYear()}
+                          </h3>
+                          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full">
+                            →
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1 mb-2">
+                          {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => (
+                            <div key={day} className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center">
+                              {day}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {renderCalendar(1)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             {/* NÚMERO DE ADULTOS */}
             <div className="relative">
               <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
