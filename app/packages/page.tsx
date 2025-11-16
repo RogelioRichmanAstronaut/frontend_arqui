@@ -12,7 +12,6 @@ import { useLanguageStore } from "@/lib/store";
 import { PackagesSearchBar } from "@/components/(packages)/search-bar";
 
 export default function Page() {
-  // Variables y estados
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
