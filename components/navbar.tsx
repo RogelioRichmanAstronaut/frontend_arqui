@@ -30,7 +30,6 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
     { href: "/", label: { es: "Inicio", en: "Home" } },
     { href: "/packages", label: { es: "Paquetes", en: "Packages" } },
     { href: "/flights", label: { es: "Vuelos", en: "Flights" } },
-    { href: "/hotels", label: { es: "Hoteles", en: "Hotels" } },
     { href: "/discover", label: { es: "Descubrir", en: "Discover" } },
     { href: "/support", label: { es: "Soporte", en: "Support" } },
   ]

@@ -55,14 +55,6 @@ export function Footer({ locale }: FooterProps) {
               </li>
               <li>
                 <Link
-                  href="/hotels"
-                  className="text-sm text-gray-600 hover:text-[#00C2A8] transition-colors"
-                >
-                  {t("Hoteles", "Hotels")}
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/support"
                   className="text-sm text-gray-600 hover:text-[#00C2A8] transition-colors"
                 >
