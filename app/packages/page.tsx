@@ -258,188 +258,180 @@ export default function Page() {
       </section>
 
       <section className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
-      <Card className="shadow-2xl">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-            {/* DESTINO */}
-            <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input placeholder={t("Destino", "Destination")} className="pl-10" />
-            </div>
+  <Card className="shadow-2xl">
+    <CardContent className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {/* DESTINO */}
+        <div className="relative md:col-span-1">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input placeholder={t("Destino", "Destination")} className="pl-10" />
+        </div>
 
-            <div className="relative md:col-span-2">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
-                <button
-                  onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                  className="w-full h-10 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm"
-                >
-                  <span className="text-gray-700">
-                    {selectedStartDate && selectedEndDate
-                      ? `${formatDate(selectedStartDate)} - ${formatDate(selectedEndDate)}`
-                      : t("Llegada/salida", "Check-in/Check-out")}
-                  </span>
-                </button>
+        {/* FECHAS */}
+        <div className="relative">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
+          <button
+            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+            className="w-full h-10 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+          >
+            <span className="text-gray-700">
+              {selectedStartDate && selectedEndDate
+                ? `${formatDate(selectedStartDate)} - ${formatDate(selectedEndDate)}`
+                : t("Llegada/salida", "Check-in/Check-out")}
+            </span>
+          </button>
 
-                {/* CALENDARIO DESPLEGABLE */}
-                {isDatePickerOpen && (
-                  <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-2xl p-6 z-50 w-[700px]">
-                    <div className="flex gap-8">
-                      {/* MES 1 */}
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center mb-4">
-                          <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full">
-                            ←
-                          </button>
-                          <h3 className="font-bold text-lg">
-                            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-                          </h3>
-                          <div className="w-10"></div>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 mb-2">
-                          {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => (
-                            <div key={day} className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center">
-                              {day}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {renderCalendar(0)}
-                        </div>
-                      </div>
-
-                      {/* MES 2 */}
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center mb-4">
-                          <div className="w-10"></div>
-                          <h3 className="font-bold text-lg">
-                            {monthNames[(currentMonth.getMonth() + 1) % 12]} {currentMonth.getMonth() === 11 ? currentMonth.getFullYear() + 1 : currentMonth.getFullYear()}
-                          </h3>
-                          <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full">
-                            →
-                          </button>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 mb-2">
-                          {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => (
-                            <div key={day} className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center">
-                              {day}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="grid grid-cols-7 gap-1">
-                          {renderCalendar(1)}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            {/* NÚMERO DE ADULTOS */}
-            <div className="relative">
-              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full h-10 pl-10 pr-3 py-2 border border-gray-300 rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm text-gray-500"
-              >
-                {adults > 0 ? `${adults}` : t("# de adultos", "# of adults")}
-              </button>
-
-              {/* POPOVER */}
-              {isOpen && (
-                <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80 z-50">
-                  {/* ADULTOS */}
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200">
-                    <span className="font-medium text-gray-700">
-                      {t("Adultos", "Adults")}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleDecrement("adults")}
-                        disabled={adults <= 1}
-                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                          adults <= 1
-                            ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                            : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
-                        } transition-colors`}
-                      >
-                        −
-                      </button>
-                      <span className="w-8 text-center font-medium">{adults}</span>
-                      <button
-                        onClick={() => handleIncrement("adults")}
-                        className="w-8 h-8 rounded-full border-2 border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white flex items-center justify-center transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* HABITACIONES */}
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200">
-                    <span className="font-medium text-gray-700">
-                      {t("Habitaciones", "Rooms")}
-                    </span>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => handleDecrement("rooms")}
-                        disabled={rooms <= 1}
-                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                          rooms <= 1
-                            ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                            : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
-                        } transition-colors`}
-                      >
-                        −
-                      </button>
-                      <span className="w-8 text-center font-medium">{rooms}</span>
-                      <button
-                        onClick={() => handleIncrement("rooms")}
-                        className="w-8 h-8 rounded-full border-2 border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white flex items-center justify-center transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* BOTONES */}
-                  <div className="flex justify-between mt-4">
-                    <button
-                      onClick={handleReset}
-                      className="text-gray-400 hover:text-gray-600 text-sm font-medium"
-                    >
-                      {t("REINICIAR", "RESET")}
+          {/* CALENDARIO DESPLEGABLE */}
+          {isDatePickerOpen && (
+            <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-2xl p-6 z-50 w-[700px]">
+              <div className="flex gap-8">
+                {/* MES 1 */}
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-4">
+                    <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full">
+                      ←
                     </button>
-                    <button
-                      onClick={() => setIsOpen(false)}
-                      className="bg-[#0A2540] hover:bg-[#0A2540]/90 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
-                    >
-                      {t("Aceptar", "Accept")}
-                    </button>
+                    <h3 className="font-bold text-lg">
+                      {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                    </h3>
+                    <div className="w-10"></div>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => (
+                      <div key={day} className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {renderCalendar(0)}
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* NÚMERO DE HABITACIONES (SOLO LECTURA) */}
-            <div className="relative">
-              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <Input
-                type="text"
-                value={rooms}
-                readOnly
-                placeholder={t("# de habitaciones", "# of rooms")}
-                className="pl-10 text-xs bg-gray-50 cursor-not-allowed"
-              />
+                {/* MES 2 */}
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="w-10"></div>
+                    <h3 className="font-bold text-lg">
+                      {monthNames[(currentMonth.getMonth() + 1) % 12]} {currentMonth.getMonth() === 11 ? currentMonth.getFullYear() + 1 : currentMonth.getFullYear()}
+                    </h3>
+                    <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full">
+                      →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 mb-2">
+                    {['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'].map(day => (
+                      <div key={day} className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center">
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {renderCalendar(1)}
+                  </div>
+                </div>
+              </div>
             </div>
+          )}
+        </div>
 
-            {/* BOTON */}
-            <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
-              <Search className="h-5 w-5 mr-2" />
-              {t("Encuentra tu paquete", "Find your package")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </section>
+        {/* HUÉSPEDES Y HABITACIONES */}
+        <div className="relative md:col-span-2">
+          <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="w-full h-10 pl-10 pr-3 py-2 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis"
+          >
+            {adults > 0 
+              ? `${adults} ${t(adults === 1 ? "huésped" : "huéspedes", adults === 1 ? "guest" : "guests")}, ${rooms} ${t(rooms === 1 ? "habitación" : "habitaciones", rooms === 1 ? "room" : "rooms")}`
+              : t("Huéspedes y habitaciones", "Guests and rooms")}
+          </button>
+
+          {/* POPOVER */}
+          {isOpen && (
+            <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80 z-50">
+              {/* ADULTOS */}
+              <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                <span className="font-medium text-gray-700">
+                  {t("Adultos", "Adults")}
+                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleDecrement("adults")}
+                    disabled={adults <= 1}
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                      adults <= 1
+                        ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                        : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                    } transition-colors`}
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center font-medium">{adults}</span>
+                  <button
+                    onClick={() => handleIncrement("adults")}
+                    className="w-8 h-8 rounded-full border-2 border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white flex items-center justify-center transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* HABITACIONES */}
+              <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                <span className="font-medium text-gray-700">
+                  {t("Habitaciones", "Rooms")}
+                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => handleDecrement("rooms")}
+                    disabled={rooms <= 1}
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                      rooms <= 1
+                        ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                        : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                    } transition-colors`}
+                  >
+                    −
+                  </button>
+                  <span className="w-8 text-center font-medium">{rooms}</span>
+                  <button
+                    onClick={() => handleIncrement("rooms")}
+                    className="w-8 h-8 rounded-full border-2 border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white flex items-center justify-center transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* BOTONES */}
+              <div className="flex justify-between mt-4">
+                <button
+                  onClick={handleReset}
+                  className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                >
+                  {t("REINICIAR", "RESET")}
+                </button>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="bg-[#0A2540] hover:bg-[#0A2540]/90 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  {t("Aceptar", "Accept")}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* BOTON */}
+        <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
+          <Search className="h-5 w-5 mr-2" />
+          {t("Encuentra tu paquete", "Find your package")}
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+</section>
 
       <section className="container mx-auto px-4 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
