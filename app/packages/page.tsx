@@ -25,22 +25,42 @@ export default function Page() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [adults, setAdults] = useState<number>(1);
   const [rooms, setRooms] = useState<number>(1);
+  const MAX_PER_ROOM = 6;
+  const MAX_ADULTS = 40;
 
-  const handleIncrement = (type: "adults" | "rooms"): void => {
-    if (type === "adults") {
-      setAdults((prev: number) => prev + 1);
-    } else {
-      setRooms((prev: number) => prev + 1);
+const handleIncrement = (type: "adults" | "rooms"): void => {
+  if (type === "adults") {
+    if (adults >= MAX_ADULTS) return;
+    const nextAdults = adults + 1;
+    const minRoomsNeeded = Math.ceil(nextAdults / MAX_PER_ROOM);
+    setAdults(nextAdults);
+    if (rooms < minRoomsNeeded) {
+      setRooms(minRoomsNeeded);
     }
-  };
+  } else {
+    const nextRooms = rooms + 1;
+    const neededAdults = Math.max(adults, nextRooms);
+    if (neededAdults > MAX_ADULTS) return;
+    setRooms(nextRooms);
+    setAdults(neededAdults);
+  }
+};
 
-  const handleDecrement = (type: "adults" | "rooms"): void => {
-    if (type === "adults" && adults > 1) {
-      setAdults((prev: number) => prev - 1);
-    } else if (type === "rooms" && rooms > 1) {
-      setRooms((prev: number) => prev - 1);
-    }
-  };
+const handleDecrement = (type: "adults" | "rooms"): void => {
+  if (type === "adults") {
+    if (adults <= rooms) return;
+    const nextAdults = adults - 1;
+    if (nextAdults < 1) return;
+    setAdults(nextAdults);
+  } else {
+    if (rooms <= 1) return;
+    const nextRooms = rooms - 1;
+    if (adults > nextRooms * MAX_PER_ROOM) return;
+    setRooms(nextRooms);
+  }
+};
+
+
   
   const handleReset = () => {
     setAdults(1);
