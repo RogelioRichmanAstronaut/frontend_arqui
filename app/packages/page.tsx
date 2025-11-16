@@ -1,62 +1,106 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { MapPin, Calendar, Users, Search, Tag, Star } from "lucide-react"
-import { Button } from "@/components/(ui)/button"
-import { Input } from "@/components/(ui)/input"
-import { Card, CardContent } from "@/components/(ui)/card"
-import { Checkbox } from "@/components/(ui)/checkbox"
-import { Slider } from "@/components/(ui)/slider"
-import { useLanguageStore } from "@/lib/store"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { MapPin, Calendar, Users, Search, Tag, Star } from "lucide-react";
+import { Button } from "@/components/(ui)/button";
+import { Input } from "@/components/(ui)/input";
+import { Card, CardContent } from "@/components/(ui)/card";
+import { Checkbox } from "@/components/(ui)/checkbox";
+import { Slider } from "@/components/(ui)/slider";
+import { useLanguageStore } from "@/lib/store";
 
-export default function PackagesPage() {
-  const { locale } = useLanguageStore()
-  const t = (es: string, en: string) => (locale === "es" ? es : en)
+export default function Page() {
+  const { locale } = useLanguageStore();
+  const t = (es: string, en: string) => (locale === "es" ? es : en);
 
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [adults, setAdults] = useState<number>(1);
+  const [rooms, setRooms] = useState<number>(1);
+
+  const handleIncrement = (type: "adults" | "rooms"): void => {
+    if (type === "adults") {
+      setAdults((prev: number) => prev + 1);
+    } else {
+      setRooms((prev: number) => prev + 1);
+    }
+  };
+
+  const handleDecrement = (type: "adults" | "rooms"): void => {
+    if (type === "adults" && adults > 1) {
+      setAdults((prev: number) => prev - 1);
+    } else if (type === "rooms" && rooms > 1) {
+      setRooms((prev: number) => prev - 1);
+    }
+  };
+  
+  const handleReset = () => {
+    setAdults(1);
+    setRooms(1);
+  };
+  
   const packages = [
     {
       title: "Water City Dreams",
       stars: 4,
-      includes: t("Vuelo directo + Traslado + Desayuno", "Direct Flight + Transfer + Breakfast"),
+      includes: t(
+        "Vuelo directo + Traslado + Desayuno",
+        "Direct Flight + Transfer + Breakfast"
+      ),
       price: "$1.250.000 COP",
       airline: "Aerolínea X",
     },
     {
       title: "Water City Dreams",
       stars: 3,
-      includes: t("Vuelo directo + Traslado + Desayuno", "Direct Flight + Transfer + Breakfast"),
+      includes: t(
+        "Vuelo directo + Traslado + Desayuno",
+        "Direct Flight + Transfer + Breakfast"
+      ),
       price: "$1.250.000 COP",
       airline: "Aerolínea X",
     },
     {
       title: "Water City Dreams",
       stars: 6,
-      includes: t("Vuelo directo + Traslado + Desayuno", "Direct Flight + Transfer + Breakfast"),
+      includes: t(
+        "Vuelo directo + Traslado + Desayuno",
+        "Direct Flight + Transfer + Breakfast"
+      ),
       price: "$1.250.000 COP",
       airline: "Aerolínea X",
     },
     {
       title: "Water City Dreams",
       stars: 4,
-      includes: t("Vuelo directo + Traslado + Desayuno", "Direct Flight + Transfer + Breakfast"),
+      includes: t(
+        "Vuelo directo + Traslado + Desayuno",
+        "Direct Flight + Transfer + Breakfast"
+      ),
       price: "$1.250.000 COP",
       airline: "Aerolínea X",
     },
     {
       title: "Water City Dreams",
       stars: 3,
-      includes: t("Vuelo directo + Traslado + Desayuno", "Direct Flight + Transfer + Breakfast"),
+      includes: t(
+        "Vuelo directo + Traslado + Desayuno",
+        "Direct Flight + Transfer + Breakfast"
+      ),
       price: "$1.250.000 COP",
       airline: "Aerolínea X",
     },
     {
       title: "Water City Dreams",
       stars: 6,
-      includes: t("Vuelo directo + Traslado + Desayuno", "Direct Flight + Transfer + Breakfast"),
+      includes: t(
+        "Vuelo directo + Traslado + Desayuno",
+        "Direct Flight + Transfer + Breakfast"
+      ),
       price: "$1.250.000 COP",
       airline: "Aerolínea X",
     },
-  ]
+  ];
 
   const benefits = [
     {
@@ -69,7 +113,10 @@ export default function PackagesPage() {
     },
     {
       icon: MapPin,
-      title: t("Todos los destinos, en un solo lugar", "All destinations, in one place"),
+      title: t(
+        "Todos los destinos, en un solo lugar",
+        "All destinations, in one place"
+      ),
       description: t(
         "Explora miles de rutas nacionales e internacionales con nuestros socios aéreos y hoteleros. Reserva fácilmente vuelo + alojamiento.",
         "Explore thousands of national and international routes with our airline and hotel partners. Easily book flight + accommodation."
@@ -77,13 +124,16 @@ export default function PackagesPage() {
     },
     {
       icon: Star,
-      title: t("Beneficios y experiencias exclusivas", "Exclusive benefits and experiences"),
+      title: t(
+        "Beneficios y experiencias exclusivas",
+        "Exclusive benefits and experiences"
+      ),
       description: t(
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed arcu eu, dui tortor, proin eu lectus pellentesque. A cras suscipit amet",
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed arcu eu, dui tortor, proin eu lectus pellentesque. A cras suscipit amet"
       ),
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -103,50 +153,142 @@ export default function PackagesPage() {
       </section>
 
       <section className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
-        <Card className="shadow-2xl">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input placeholder={t("Origen", "Origin")} className="pl-10" />
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input placeholder={t("Destino", "Destination")} className="pl-10" />
-              </div>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="date"
-                  placeholder={t("Dia de salida", "Departure day")}
-                  className="pl-10"
-                />
-              </div>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="date"
-                  placeholder={t("Dia de llegada", "Arrival day")}
-                  className="pl-10"
-                />
-              </div>
-              <div className="relative">
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="number"
-                  placeholder={t("# Personas", "# Persons")}
-                  className="pl-10"
-                  min="1"
-                />
-              </div>
-              <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
-                <Search className="h-5 w-5 mr-2" />
-                {t("Encuentra tu paquete", "Find your package")}
-              </Button>
+      <Card className="shadow-2xl">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            {/* DESTINO */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input placeholder={t("Destino", "Destination")} className="pl-10" />
             </div>
-          </CardContent>
-        </Card>
-      </section>
+
+            {/* FECHA DE SALIDA */}
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="date"
+                placeholder={t("Día de salida", "Departure day")}
+                className="pl-10"
+              />
+            </div>
+
+            {/* FECHA DE LLEGADA */}
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="date"
+                placeholder={t("Día de llegada", "Arrival day")}
+                className="pl-10"
+              />
+            </div>
+
+            {/* NÚMERO DE ADULTOS */}
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full h-10 pl-10 pr-3 py-2 border border-gray-300 rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm text-gray-500"
+              >
+                {adults > 0 ? `${adults}` : t("# de adultos", "# of adults")}
+              </button>
+
+              {/* POPOVER */}
+              {isOpen && (
+                <div className="absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80 z-50">
+                  {/* ADULTOS */}
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                    <span className="font-medium text-gray-700">
+                      {t("Adultos", "Adults")}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleDecrement("adults")}
+                        disabled={adults <= 1}
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                          adults <= 1
+                            ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                            : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                        } transition-colors`}
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-medium">{adults}</span>
+                      <button
+                        onClick={() => handleIncrement("adults")}
+                        className="w-8 h-8 rounded-full border-2 border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white flex items-center justify-center transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* HABITACIONES */}
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200">
+                    <span className="font-medium text-gray-700">
+                      {t("Habitaciones", "Rooms")}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => handleDecrement("rooms")}
+                        disabled={rooms <= 1}
+                        className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
+                          rooms <= 1
+                            ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                            : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                        } transition-colors`}
+                      >
+                        −
+                      </button>
+                      <span className="w-8 text-center font-medium">{rooms}</span>
+                      <button
+                        onClick={() => handleIncrement("rooms")}
+                        className="w-8 h-8 rounded-full border-2 border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white flex items-center justify-center transition-colors"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* BOTONES */}
+                  <div className="flex justify-between mt-4">
+                    <button
+                      onClick={handleReset}
+                      className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+                    >
+                      {t("REINICIAR", "RESET")}
+                    </button>
+                    <button
+                      onClick={() => setIsOpen(false)}
+                      className="bg-[#0A2540] hover:bg-[#0A2540]/90 text-white px-6 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      {t("Aceptar", "Accept")}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* NÚMERO DE HABITACIONES (SOLO LECTURA) */}
+            <div className="relative">
+              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Input
+                type="text"
+                value={rooms}
+                readOnly
+                placeholder={t("# de habitaciones", "# of rooms")}
+                className="pl-10 text-xs bg-gray-50 cursor-not-allowed"
+              />
+            </div>
+
+            {/* BOTON */}
+            <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
+              <Search className="h-5 w-5 mr-2" />
+              {t("Encuentra tu paquete", "Find your package")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
 
       <section className="container mx-auto px-4 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
@@ -179,7 +321,8 @@ export default function PackagesPage() {
                         htmlFor={`star-${star}`}
                         className="text-sm text-gray-700 cursor-pointer flex items-center gap-1"
                       >
-                        {star} <Star className="h-3 w-3 fill-[#00C2A8] text-[#00C2A8]" />
+                        {star}{" "}
+                        <Star className="h-3 w-3 fill-[#00C2A8] text-[#00C2A8]" />
                       </label>
                     </div>
                   ))}
@@ -195,7 +338,10 @@ export default function PackagesPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Checkbox id="breakfast" />
-                    <label htmlFor="breakfast" className="text-sm text-gray-700 cursor-pointer">
+                    <label
+                      htmlFor="breakfast"
+                      className="text-sm text-gray-700 cursor-pointer"
+                    >
                       {t("Incluye desayuno", "Includes breakfast")}
                     </label>
                   </div>
@@ -224,14 +370,22 @@ export default function PackagesPage() {
                           />
                         ))}
                       </div>
-                      <h3 className="text-lg font-bold text-[#0A2540] mb-3">{pkg.title}</h3>
-                      <p className="text-sm text-gray-600 mb-4">{pkg.includes}</p>
+                      <h3 className="text-lg font-bold text-[#0A2540] mb-3">
+                        {pkg.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {pkg.includes}
+                      </p>
                       <div className="mb-4">
                         <p className="text-2xl font-bold text-[#0A2540]">
                           {t("Desde", "From")} {pkg.price}
                         </p>
-                        <p className="text-sm text-gray-600">/ {t("persona", "person")}</p>
-                        <p className="text-sm text-gray-600 mt-2">{pkg.airline}</p>
+                        <p className="text-sm text-gray-600">
+                          / {t("persona", "person")}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          {pkg.airline}
+                        </p>
                       </div>
                       <Button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
                         {t("Reservar", "Book")}
@@ -264,7 +418,9 @@ export default function PackagesPage() {
                     <h3 className="text-xl font-bold text-[#0A2540] mb-3">
                       {benefit.title}
                     </h3>
-                    <p className="text-gray-600 leading-relaxed">{benefit.description}</p>
+                    <p className="text-gray-600 leading-relaxed">
+                      {benefit.description}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -273,5 +429,6 @@ export default function PackagesPage() {
         </div>
       </section>
     </div>
-  )
+  );
 }
+
