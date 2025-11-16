@@ -15,6 +15,7 @@ export default function Page() {
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
+  
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
