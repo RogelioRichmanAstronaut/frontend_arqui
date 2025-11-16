@@ -184,6 +184,7 @@ export default function Page() {
       currentDate.setHours(0, 0, 0, 0);
       const isPast = currentDate < today;
 
+
       days.push(
         <button
           key={day}
@@ -219,6 +220,17 @@ export default function Page() {
       new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
     );
   };
+
+  const toggleDatePicker = () => {
+  setIsDatePickerOpen(prev => !prev)
+  setIsOpen(false)
+}
+
+const toggleGuests = () => {
+  setIsOpen(prev => !prev)
+  setIsDatePickerOpen(false)
+}
+
 
   const packages = [
     {
@@ -350,7 +362,7 @@ export default function Page() {
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                 <button
-                  onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                  onClick={toggleDatePicker}
                   className="w-full h-10 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm whitespace-nowrap overflow-hidden text-ellipsis"
                 >
                   <span className="text-gray-700">
@@ -440,7 +452,7 @@ export default function Page() {
               <div className="relative md:col-span-2">
                 <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none z-10" />
                 <button
-                  onClick={() => setIsOpen(!isOpen)}
+                  onClick={toggleGuests}
                   className="w-full h-10 pl-10 pr-3 py-2 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm text-gray-700 whitespace-nowrap overflow-hidden text-ellipsis"
                 >
                   {adults > 0
