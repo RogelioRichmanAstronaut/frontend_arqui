@@ -3,18 +3,18 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Heart, Luggage, User, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/(ui)/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/(ui)/dropdown-menu"
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from "@/components/(ui)/sheet"
 import { useState } from "react"
 
 interface NavbarProps {

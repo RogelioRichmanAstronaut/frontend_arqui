@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion"
 import { MapPin, Calendar, Users, Search, Tag, Star } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Slider } from "@/components/ui/slider"
+import { Button } from "@/components/(ui)/button"
+import { Input } from "@/components/(ui)/input"
+import { Card, CardContent } from "@/components/(ui)/card"
+import { Checkbox } from "@/components/(ui)/checkbox"
+import { Slider } from "@/components/(ui)/slider"
 import { useLanguageStore } from "@/lib/store"
 
 export default function PackagesPage() {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/(ui)/card"
 import { useLanguageStore } from "@/lib/store"
 
 export default function SupportPage() {
