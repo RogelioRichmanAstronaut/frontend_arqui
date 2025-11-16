@@ -109,6 +109,8 @@ export default function Page() {
     const displayDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + monthOffset, 1);
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(displayDate);
     const days = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
 
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(<div key={`empty-${i}`} className="h-10"></div>);
@@ -117,15 +119,24 @@ export default function Page() {
     for (let day = 1; day <= daysInMonth; day++) {
       const selected = isDateSelected(day, monthOffset);
       const inRange = isDateInRange(day, monthOffset);
+      
+      // Verificar si el día es anterior a hoy
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth() + monthOffset;
+      const currentDate = new Date(year, month, day);
+      currentDate.setHours(0, 0, 0, 0);
+      const isPast = currentDate < today;
 
       days.push(
         <button
           key={day}
-          onClick={() => handleDateClick(day, monthOffset)}
+          onClick={() => !isPast && handleDateClick(day, monthOffset)}
+          disabled={isPast}
           className={`h-10 w-10 flex items-center justify-center rounded-full text-sm
             ${selected === 'start' || selected === 'end' ? 'bg-[#0071C2] text-white font-bold' : ''}
             ${inRange ? 'bg-[#E6F2FF]' : ''}
-            ${!selected && !inRange ? 'hover:bg-gray-100' : ''}
+            ${isPast ? 'text-gray-300 cursor-not-allowed' : ''}
+            ${!selected && !inRange && !isPast ? 'hover:bg-gray-100' : ''}
             transition-colors`}
         >
           {day}
