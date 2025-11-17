@@ -34,13 +34,13 @@ const serviceIcons: { [key: string]: React.ReactNode } = {
   gimnasio: <Dumbbell className="h-5 w-5" />,
   restaurante: <Utensils className="h-5 w-5" />,
   'restaurante gourmet': <Utensils className="h-5 w-5" />,
-  spa: <div className="h-5 w-5">✨</div>,
-  piscina: <div className="h-5 w-5">🏊</div>,
-  'aire acondicionado': <div className="h-5 w-5">❄️</div>,
+  spa: <div className="h-5 w-5"></div>,
+  piscina: <div className="h-5 w-5"></div>,
+  'aire acondicionado': <div className="h-5 w-5"></div>,
   tv: <div className="h-5 w-5">📺</div>,
   jacuzzi: <div className="h-5 w-5">🛁</div>,
   minibar: <div className="h-5 w-5">🍹</div>,
-  'vista panorámica': <div className="h-5 w-5">🏞️</div>,
+  'vista panorámica': <div className="h-5 w-5"></div>,
 };
 
 export function HotelDetailsModal({ hotel, onClose, onReserve }: HotelDetailsModalProps) {
