@@ -282,7 +282,7 @@ export default function Page() {
 
   const handleReserve = (hotel: Hotel, room: RoomType) => {
     setReservationData({ hotel, room });
-    // aqui luego puedes navegar a la pagina de reserva si quieres
+    
   };
 
   const benefits = [
