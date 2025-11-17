@@ -1,142 +1,288 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Calendar, Users, Search, Tag, Star } from "lucide-react";
-import { Button } from "@/components/(ui)/button";
-import { Input } from "@/components/(ui)/input";
+import { MapPin, Tag, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/(ui)/card";
-import { Checkbox } from "@/components/(ui)/checkbox";
-import { Slider } from "@/components/(ui)/slider";
 import { useLanguageStore } from "@/lib/store";
 import { PackagesSearchBar } from "@/components/(packages)/search-bar";
+import { PackageCard } from "@/components/(packages)/package-card";
+import { HotelDetailsModal } from "@/components/(packages)/hotel-modal";
+import { PriceFilter } from "@/components/(packages)/filters/price";
+import { StarsFilter } from "@/components/(packages)/filters/stars";
+import { DetailsFilter } from "@/components/(packages)/filters/details";
+import { usePackagesFilters } from "@/lib/hooks/packages-filters";
+
+interface RoomType {
+  habitacion_id: string;
+  tipo: string;
+  disponibilidad: string;
+  codigo_tipo_habitacion: string;
+  precio: number;
+  servicios_habitacion: string[];
+}
+
+interface Hotel {
+  hotel_id: string;
+  nombre: string;
+  categoria_estrellas: number;
+  ciudad: string;
+  direccion: string;
+  servicios_hotel: string[];
+  fotos: string[];
+  habitaciones: RoomType[];
+}
+
+interface Package {
+  title: string;
+  stars: number;
+  includes: string;
+  price: number;
+  displayPrice: string;
+  airline: string;
+  hasBreakfast: boolean;
+  hotel?: Hotel;
+}
+
+const allPackages: Package[] = [
+  {
+    title: "Water City Dreams",
+    stars: 4,
+    includes: "Vuelo directo + Traslado + Desayuno",
+    price: 1250000,
+    displayPrice: "$1.250.000 COP",
+    airline: "Aerolínea X",
+    hasBreakfast: true,
+    hotel: {
+      hotel_id: "HOT-001",
+      nombre: "Hotel Andes Plaza",
+      categoria_estrellas: 4,
+      ciudad: "Bogotá",
+      direccion: "Av. 15 #100-11",
+      servicios_hotel: ["wifi", "desayuno incluido", "gimnasio", "restaurante"],
+      fotos: [
+        "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop",
+        "https://images.unsplash.com/photo-1520619555298-1581cf47c1c0?w=800&h=600&fit=crop",
+      ],
+      habitaciones: [
+        {
+          habitacion_id: "HAB-001",
+          tipo: "Doble Estándar",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "DBL-STD",
+          precio: 320000,
+          servicios_habitacion: ["wifi", "tv", "aire acondicionado"],
+        },
+        {
+          habitacion_id: "HAB-002",
+          tipo: "Suite Ejecutiva",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "STE-EJEC",
+          precio: 580000,
+          servicios_habitacion: ["wifi", "tv", "jacuzzi", "minibar"],
+        },
+      ],
+    },
+  },
+  {
+    title: "Mountain Paradise",
+    stars: 3,
+    includes: "Vuelo directo + Traslado",
+    price: 850000,
+    displayPrice: "$850.000 COP",
+    airline: "Aerolínea Y",
+    hasBreakfast: false,
+    hotel: {
+      hotel_id: "HOT-003",
+      nombre: "Hotel Mountain View",
+      categoria_estrellas: 3,
+      ciudad: "Medellín",
+      direccion: "Calle 50 #15-25",
+      servicios_hotel: ["wifi", "restaurante", "terraza"],
+      fotos: [
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+      ],
+      habitaciones: [
+        {
+          habitacion_id: "HAB-003",
+          tipo: "Doble Estándar",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "DBL-STD",
+          precio: 250000,
+          servicios_habitacion: ["wifi", "tv", "balcón"],
+        },
+      ],
+    },
+  },
+  {
+    title: "Luxury Beach Resort",
+    stars: 5,
+    includes: "Vuelo directo + Traslado + Desayuno + Cena",
+    price: 2500000,
+    displayPrice: "$2.500.000 COP",
+    airline: "Aerolínea Z",
+    hasBreakfast: true,
+    hotel: {
+      hotel_id: "HOT-002",
+      nombre: "Hotel Tequendama",
+      categoria_estrellas: 5,
+      ciudad: "Cartagena",
+      direccion: "Carrera 10 #26-21",
+      servicios_hotel: ["wifi", "spa", "piscina", "restaurante gourmet"],
+      fotos: [
+        "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800&h=600&fit=crop",
+        "https://images.unsplash.com/photo-1551632786-de41ec16a vector?w=800&h=600&fit=crop",
+      ],
+      habitaciones: [
+        {
+          habitacion_id: "HAB-010",
+          tipo: "Suite Presidencial",
+          disponibilidad: "NO DISPONIBLE",
+          codigo_tipo_habitacion: "STE-PRES",
+          precio: 1200000,
+          servicios_habitacion: ["wifi", "tv", "jacuzzi", "vista panorámica"],
+        },
+        {
+          habitacion_id: "HAB-011",
+          tipo: "Suite Deluxe",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "STE-DELUX",
+          precio: 850000,
+          servicios_habitacion: ["wifi", "tv", "jacuzzi", "minibar", "vista al mar"],
+        },
+      ],
+    },
+  },
+  {
+    title: "City Explorer",
+    stars: 4,
+    includes: "Vuelo directo + Traslado + Desayuno",
+    price: 1100000,
+    displayPrice: "$1.100.000 COP",
+    airline: "Aerolínea X",
+    hasBreakfast: true,
+    hotel: {
+      hotel_id: "HOT-004",
+      nombre: "Hotel City Center",
+      categoria_estrellas: 4,
+      ciudad: "Cali",
+      direccion: "Av. Colombia #5-50",
+      servicios_hotel: ["wifi", "gimnasio", "restaurante", "bar"],
+      fotos: [
+        "https://images.unsplash.com/photo-1564501049351-005e2ccb1144?w=800&h=600&fit=crop",
+        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+      ],
+      habitaciones: [
+        {
+          habitacion_id: "HAB-004",
+          tipo: "Doble Deluxe",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "DBL-DELUX",
+          precio: 400000,
+          servicios_habitacion: ["wifi", "tv", "minibar", "vista a la ciudad"],
+        },
+      ],
+    },
+  },
+  {
+    title: "Budget Adventure",
+    stars: 2,
+    includes: "Vuelo directo + Traslado",
+    price: 650000,
+    displayPrice: "$650.000 COP",
+    airline: "Aerolínea Y",
+    hasBreakfast: false,
+    hotel: {
+      hotel_id: "HOT-005",
+      nombre: "Hotel Budget Plus",
+      categoria_estrellas: 2,
+      ciudad: "Santa Marta",
+      direccion: "Calle 1 #2-10",
+      servicios_hotel: ["wifi", "restaurante"],
+      fotos: [
+        "https://images.unsplash.com/photo-1585132991992-378a50ee3015?w=800&h=600&fit=crop",
+        "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&h=600&fit=crop",
+      ],
+      habitaciones: [
+        {
+          habitacion_id: "HAB-005",
+          tipo: "Habitación Doble",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "DOBLE",
+          precio: 180000,
+          servicios_habitacion: ["wifi", "tv"],
+        },
+      ],
+    },
+  },
+  {
+    title: "Premium Experience",
+    stars: 5,
+    includes: "Vuelo directo + Traslado + Desayuno + Spa",
+    price: 3200000,
+    displayPrice: "$3.200.000 COP",
+    airline: "Aerolínea Z",
+    hasBreakfast: true,
+    hotel: {
+      hotel_id: "HOT-006",
+      nombre: "Hotel Spa Luxury",
+      categoria_estrellas: 5,
+      ciudad: "Santa Marta",
+      direccion: "Av. Costanera #100-1",
+      servicios_hotel: [
+        "wifi",
+        "spa completo",
+        "piscina infinity",
+        "restaurante 5 estrellas",
+        "playa privada",
+      ],
+      fotos: [
+        "https://images.unsplash.com/photo-1571003123894-169f27e0c0d4?w=800&h=600&fit=crop",
+        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+      ],
+      habitaciones: [
+        {
+          habitacion_id: "HAB-006",
+          tipo: "Villa Privada",
+          disponibilidad: "DISPONIBLE",
+          codigo_tipo_habitacion: "VILLA",
+          precio: 1500000,
+          servicios_habitacion: ["wifi", "jacuzzi privado", "piscina", "butler", "vista al océano"],
+        },
+      ],
+    },
+  },
+];
 
 export default function Page() {
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
-  const [minPrice, setMinPrice] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<string>("");
-  const [priceRange, setPriceRange] = useState<number[]>([100]);
-  const [selectedStars, setSelectedStars] = useState<number[]>([]);
-  const [includesBreakfast, setIncludesBreakfast] = useState<boolean>(false);
+  const {
+    minPrice,
+    maxPrice,
+    priceRange,
+    selectedStars,
+    includesBreakfast,
+    maxPackagePrice,
+    filteredPackages,
+    setPriceRange,
+    setIncludesBreakfast,
+    handleStarToggle,
+    handleMinPriceChange,
+    handleMaxPriceChange,
+  } = usePackagesFilters(allPackages);
 
-  const allPackages = [
-    {
-      title: "Water City Dreams",
-      stars: 4,
-      includes: t(
-        "Vuelo directo + Traslado + Desayuno",
-        "Direct Flight + Transfer + Breakfast"
-      ),
-      price: 1250000,
-      displayPrice: "$1.250.000 COP",
-      airline: "Aerolínea X",
-      hasBreakfast: true,
-    },
-    {
-      title: "Mountain Paradise",
-      stars: 3,
-      includes: t(
-        "Vuelo directo + Traslado",
-        "Direct Flight + Transfer"
-      ),
-      price: 850000,
-      displayPrice: "$850.000 COP",
-      airline: "Aerolínea Y",
-      hasBreakfast: false,
-    },
-    {
-      title: "Luxury Beach Resort",
-      stars: 5,
-      includes: t(
-        "Vuelo directo + Traslado + Desayuno + Cena",
-        "Direct Flight + Transfer + Breakfast + Dinner"
-      ),
-      price: 2500000,
-      displayPrice: "$2.500.000 COP",
-      airline: "Aerolínea Z",
-      hasBreakfast: true,
-    },
-    {
-      title: "City Explorer",
-      stars: 4,
-      includes: t(
-        "Vuelo directo + Traslado + Desayuno",
-        "Direct Flight + Transfer + Breakfast"
-      ),
-      price: 1100000,
-      displayPrice: "$1.100.000 COP",
-      airline: "Aerolínea X",
-      hasBreakfast: true,
-    },
-    {
-      title: "Budget Adventure",
-      stars: 2,
-      includes: t(
-        "Vuelo directo + Traslado",
-        "Direct Flight + Transfer"
-      ),
-      price: 650000,
-      displayPrice: "$650.000 COP",
-      airline: "Aerolínea Y",
-      hasBreakfast: false,
-    },
-    {
-      title: "Premium Experience",
-      stars: 5,
-      includes: t(
-        "Vuelo directo + Traslado + Desayuno + Spa",
-        "Direct Flight + Transfer + Breakfast + Spa"
-      ),
-      price: 3200000,
-      displayPrice: "$3.200.000 COP",
-      airline: "Aerolínea Z",
-      hasBreakfast: true,
-    },
-  ];
+  const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
+  const [reservationData, setReservationData] = useState<{
+    hotel: Hotel;
+    room: RoomType;
+  } | null>(null);
 
-  const maxPackagePrice = Math.max(...allPackages.map(pkg => pkg.price));
-
-  const filteredPackages = useMemo(() => {
-    return allPackages.filter((pkg) => {
-      const min = minPrice ? parseFloat(minPrice.replace(/\D/g, '')) : 0;
-      if (min && pkg.price < min) return false;
-
-      const max = maxPrice ? parseFloat(maxPrice.replace(/\D/g, '')) : Infinity;
-      if (max && pkg.price > max) return false;
-
-      const maxFromSlider = (priceRange[0] / 100) * maxPackagePrice;
-      if (pkg.price > maxFromSlider) return false;
-
-      if (selectedStars.length > 0 && !selectedStars.includes(pkg.stars)) {
-        return false;
-      }
-
-      if (includesBreakfast && !pkg.hasBreakfast) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [minPrice, maxPrice, priceRange, selectedStars, includesBreakfast, allPackages, maxPackagePrice]);
-
-  const handleStarToggle = (star: number) => {
-    setSelectedStars((prev) =>
-      prev.includes(star)
-        ? prev.filter((s) => s !== star)
-        : [...prev, star]
-    );
-  };
-
-  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setMinPrice(value);
-  };
-
-  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setMaxPrice(value);
+  const handleReserve = (hotel: Hotel, room: RoomType) => {
+    setReservationData({ hotel, room });
+    // aqui luego puedes navegar a la pagina de reserva si quieres
   };
 
   const benefits = [
@@ -196,92 +342,26 @@ export default function Page() {
       <section className="container mx-auto px-4 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
           <aside className="lg:w-64 space-y-6">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-bold text-[#0A2540] mb-4">
-                  {t("Precio", "Price")}
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Min $"
-                      className="flex-1"
-                      value={minPrice}
-                      onChange={handleMinPriceChange}
-                      type="text"
-                    />
-                    <Input
-                      placeholder="Max $"
-                      className="flex-1"
-                      value={maxPrice}
-                      onChange={handleMaxPriceChange}
-                      type="text"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Slider
-                      value={priceRange}
-                      onValueChange={setPriceRange}
-                      max={100}
-                      step={1}
-                      className="cursor-pointer"
-                    />
-                    <p className="text-xs text-gray-500 text-center">
-                      {t("Hasta", "Up to")} ${Math.floor((priceRange[0] / 100) * maxPackagePrice).toLocaleString('es-CO')} COP
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-bold text-[#0A2540] mb-4">
-                  {t("Estrellas", "Stars")}
-                </h3>
-                <div className="space-y-3">
-                  {[5, 4, 3, 2, 1].map((star) => (
-                    <div key={star} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`star-${star}`}
-                        checked={selectedStars.includes(star)}
-                        onCheckedChange={() => handleStarToggle(star)}
-                      />
-                      <label
-                        htmlFor={`star-${star}`}
-                        className="text-sm text-gray-700 cursor-pointer flex items-center gap-1"
-                      >
-                        {star}{" "}
-                        <Star className="h-3 w-3 fill-[#00C2A8] text-[#00C2A8]" />
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-bold text-[#0A2540] mb-4">
-                  {t("Detalles", "Details")}
-                </h3>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="breakfast"
-                      checked={includesBreakfast}
-                      onCheckedChange={(checked) => setIncludesBreakfast(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="breakfast"
-                      className="text-sm text-gray-700 cursor-pointer"
-                    >
-                      {t("Incluye desayuno", "Includes breakfast")}
-                    </label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <PriceFilter
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              priceRange={priceRange}
+              maxPackagePrice={maxPackagePrice}
+              t={t}
+              onMinChange={handleMinPriceChange}
+              onMaxChange={handleMaxPriceChange}
+              onRangeChange={setPriceRange}
+            />
+            <StarsFilter
+              selectedStars={selectedStars}
+              onToggleStar={handleStarToggle}
+              t={t}
+            />
+            <DetailsFilter
+              includesBreakfast={includesBreakfast}
+              onChangeIncludesBreakfast={setIncludesBreakfast}
+              t={t}
+            />
           </aside>
 
           <div className="flex-1">
@@ -298,45 +378,20 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPackages.map((pkg, index) => (
                   <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
+                    key={pkg.title}
+                    initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
-                    className="h-full"
                   >
-                    <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
-                      <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0" />
-                      <CardContent className="p-6 flex flex-col flex-grow">
-                        <div className="flex items-center gap-1 mb-2 h-5">
-                          {Array.from({ length: pkg.stars }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className="h-4 w-4 fill-[#00C2A8] text-[#00C2A8]"
-                            />
-                          ))}
-                        </div>
-                        <h3 className="text-lg font-bold text-[#0A2540] mb-3 min-h-[28px]">
-                          {pkg.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4 flex-grow min-h-[40px]">
-                          {pkg.includes}
-                        </p>
-                        <div className="mb-4 space-y-1">
-                          <p className="text-2xl font-bold text-[#0A2540]">
-                            {t("Desde", "From")} {pkg.displayPrice}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            / {t("persona", "person")}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {pkg.airline}
-                          </p>
-                        </div>
-                        <Button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white mt-auto">
-                          {t("Reservar", "Book")}
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    <PackageCard
+                      title={pkg.title}
+                      stars={pkg.stars}
+                      includes={pkg.includes}
+                      displayPrice={pkg.displayPrice}
+                      airline={pkg.airline}
+                      index={index}
+                      onSelect={() => pkg.hotel && setSelectedHotel(pkg.hotel)}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -352,9 +407,8 @@ export default function Page() {
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.1 }}
-                viewport={{ once: true }}
               >
                 <Card className="h-full">
                   <CardContent className="p-8 text-center">
@@ -374,6 +428,14 @@ export default function Page() {
           </div>
         </div>
       </section>
+
+      {selectedHotel && (
+        <HotelDetailsModal
+          hotel={selectedHotel}
+          onClose={() => setSelectedHotel(null)}
+          onReserve={handleReserve}
+        />
+      )}
     </div>
   );
 }
