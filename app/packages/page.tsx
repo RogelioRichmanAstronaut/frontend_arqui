@@ -100,24 +100,19 @@ export default function Page() {
 
   const filteredPackages = useMemo(() => {
     return allPackages.filter((pkg) => {
-      // Filtro por precio mínimo
       const min = minPrice ? parseFloat(minPrice.replace(/\D/g, '')) : 0;
       if (min && pkg.price < min) return false;
 
-      // Filtro por precio máximo
       const max = maxPrice ? parseFloat(maxPrice.replace(/\D/g, '')) : Infinity;
       if (max && pkg.price > max) return false;
 
-      // Filtro por rango de precio (slider)
       const maxFromSlider = (priceRange[0] / 100) * maxPackagePrice;
       if (pkg.price > maxFromSlider) return false;
 
-      // Filtro por estrellas
       if (selectedStars.length > 0 && !selectedStars.includes(pkg.stars)) {
         return false;
       }
 
-      // Filtro por desayuno
       if (includesBreakfast && !pkg.hasBreakfast) {
         return false;
       }
@@ -307,11 +302,12 @@ export default function Page() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="h-full"
                   >
-                    <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                      <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600" />
-                      <CardContent className="p-6">
-                        <div className="flex items-center gap-1 mb-2">
+                    <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+                      <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0" />
+                      <CardContent className="p-6 flex flex-col flex-grow">
+                        <div className="flex items-center gap-1 mb-2 h-5">
                           {Array.from({ length: pkg.stars }).map((_, i) => (
                             <Star
                               key={i}
@@ -319,24 +315,24 @@ export default function Page() {
                             />
                           ))}
                         </div>
-                        <h3 className="text-lg font-bold text-[#0A2540] mb-3">
+                        <h3 className="text-lg font-bold text-[#0A2540] mb-3 min-h-[28px]">
                           {pkg.title}
                         </h3>
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-gray-600 mb-4 flex-grow min-h-[40px]">
                           {pkg.includes}
                         </p>
-                        <div className="mb-4">
+                        <div className="mb-4 space-y-1">
                           <p className="text-2xl font-bold text-[#0A2540]">
                             {t("Desde", "From")} {pkg.displayPrice}
                           </p>
                           <p className="text-sm text-gray-600">
                             / {t("persona", "person")}
                           </p>
-                          <p className="text-sm text-gray-600 mt-2">
+                          <p className="text-sm text-gray-600">
                             {pkg.airline}
                           </p>
                         </div>
-                        <Button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
+                        <Button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white mt-auto">
                           {t("Reservar", "Book")}
                         </Button>
                       </CardContent>
