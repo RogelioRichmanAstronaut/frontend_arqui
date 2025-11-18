@@ -29,7 +29,6 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
   const navLinks = [
     { href: "/", label: { es: "Inicio", en: "Home" } },
     { href: "/packages", label: { es: "Paquetes", en: "Packages" } },
-    { href: "/flights", label: { es: "Vuelos", en: "Flights" } },
     { href: "/discover", label: { es: "Descubrir", en: "Discover" } },
     { href: "/support", label: { es: "Soporte", en: "Support" } },
   ]

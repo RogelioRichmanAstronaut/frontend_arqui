@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin, Users, BedDouble } from "lucide-react";
 import { Card, CardContent } from "@/components/(ui)/card";
 import { Button } from "@/components/(ui)/button";
 import { Input } from "@/components/(ui)/input";
+import { Alert, AlertDescription } from "@/components/(ui)/alert";
 import { usePackageReservationStore } from "@/lib/package-reservation-store";
 
 const formatDate = (iso: string | null) => {
@@ -53,13 +54,71 @@ export default function PackagesConfirmPage() {
   const updateSearchDetails = usePackageReservationStore((state) => state.updateSearchDetails);
   const reset = usePackageReservationStore((state) => state.reset);
   const hasRedirected = useRef(false);
+  const isConfirming = useRef(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!hotel && !hasRedirected.current) {
+    if (!hotel && !hasRedirected.current && !isConfirming.current) {
       hasRedirected.current = true;
       router.replace("/packages");
     }
   }, [hotel, router]);
+
+  const validateFields = (): boolean => {
+    if (!searchDetails) {
+      setValidationError("No hay detalles de búsqueda disponibles");
+      return false;
+    }
+
+    const errors: string[] = [];
+
+    if (!searchDetails.destination || searchDetails.destination.trim() === "") {
+      errors.push("El destino es requerido");
+    }
+
+    if (!searchDetails.checkIn) {
+      errors.push("La fecha de check-in es requerida");
+    }
+
+    if (!searchDetails.checkOut) {
+      errors.push("La fecha de check-out es requerida");
+    }
+
+    if (!searchDetails.adults || searchDetails.adults < 1) {
+      errors.push("Debe haber al menos 1 adulto");
+    }
+
+    if (!searchDetails.rooms || searchDetails.rooms < 1) {
+      errors.push("Debe haber al menos 1 habitación");
+    }
+
+    if (errors.length > 0) {
+      setValidationError(errors.join(". "));
+      return false;
+    }
+
+    setValidationError(null);
+    return true;
+  };
+
+  const handleConfirm = () => {
+    if (!validateFields()) {
+      return;
+    }
+
+    // Marcar que estamos confirmando ANTES de cualquier operación
+    // Esto previene que el useEffect redirija a /packages
+    isConfirming.current = true;
+    
+    // Navegar a flights usando replace para evitar problemas de historial
+    router.replace("/flights");
+    
+    // Resetear el estado después de un delay para asegurar que la navegación se procese
+    setTimeout(() => {
+      reset();
+      isConfirming.current = false;
+    }, 500);
+  };
 
   if (!hotel || !searchDetails) {
     return (
@@ -104,9 +163,10 @@ export default function PackagesConfirmPage() {
                   <Input
                     type="text"
                     value={searchDetails.destination || ""}
-                    onChange={(e) =>
-                      updateSearchDetails({ destination: e.target.value })
-                    }
+                    onChange={(e) => {
+                      updateSearchDetails({ destination: e.target.value });
+                      setValidationError(null);
+                    }}
                     placeholder="Por definir"
                     className="w-full"
                   />
@@ -122,11 +182,12 @@ export default function PackagesConfirmPage() {
                       <Input
                         type="date"
                         value={formatDateForInput(searchDetails.checkIn)}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           updateSearchDetails({
                             checkIn: parseDateFromInput(e.target.value),
-                          })
-                        }
+                          });
+                          setValidationError(null);
+                        }}
                         className="w-full"
                       />
                       <p className="text-xs text-gray-400 mt-1">Check-in</p>
@@ -135,11 +196,12 @@ export default function PackagesConfirmPage() {
                       <Input
                         type="date"
                         value={formatDateForInput(searchDetails.checkOut)}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           updateSearchDetails({
                             checkOut: parseDateFromInput(e.target.value),
-                          })
-                        }
+                          });
+                          setValidationError(null);
+                        }}
                         min={formatDateForInput(searchDetails.checkIn)}
                         className="w-full"
                       />
@@ -157,11 +219,12 @@ export default function PackagesConfirmPage() {
                     type="number"
                     min="1"
                     value={searchDetails.adults}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       updateSearchDetails({
                         adults: parseInt(e.target.value) || 1,
-                      })
-                    }
+                      });
+                      setValidationError(null);
+                    }}
                     className="w-full"
                   />
                 </div>
@@ -177,11 +240,12 @@ export default function PackagesConfirmPage() {
                     type="number"
                     min="1"
                     value={searchDetails.rooms}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       updateSearchDetails({
                         rooms: parseInt(e.target.value) || 1,
-                      })
-                    }
+                      });
+                      setValidationError(null);
+                    }}
                     className="w-full"
                   />
                 </div>
@@ -226,6 +290,12 @@ export default function PackagesConfirmPage() {
           </Card>
         </div>
 
+        {validationError && (
+          <Alert variant="destructive">
+            <AlertDescription>{validationError}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             variant="outline"
@@ -236,10 +306,7 @@ export default function PackagesConfirmPage() {
           </Button>
           <Button
             className="flex-1 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white"
-            onClick={() => {
-              reset();
-              router.push("/packages");
-            }}
+            onClick={handleConfirm}
           >
             Confirmar datos
           </Button>
