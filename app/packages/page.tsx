@@ -12,37 +12,11 @@ import { PriceFilter } from "@/components/(packages)/filters/price";
 import { StarsFilter } from "@/components/(packages)/filters/stars";
 import { DetailsFilter } from "@/components/(packages)/filters/details";
 import { usePackagesFilters } from "@/lib/hooks/packages-filters";
-
-interface RoomType {
-  habitacion_id: string;
-  tipo: string;
-  disponibilidad: string;
-  codigo_tipo_habitacion: string;
-  precio: number;
-  servicios_habitacion: string[];
-}
-
-interface Hotel {
-  hotel_id: string;
-  nombre: string;
-  categoria_estrellas: number;
-  ciudad: string;
-  direccion: string;
-  servicios_hotel: string[];
-  fotos: string[];
-  habitaciones: RoomType[];
-}
-
-interface Package {
-  title: string;
-  stars: number;
-  includes: string;
-  price: number;
-  displayPrice: string;
-  airline: string;
-  hasBreakfast: boolean;
-  hotel?: Hotel;
-}
+import type {
+  Hotel,
+  Package,
+  RoomType,
+} from "@/lib/types/packages";
 
 const allPackages: Package[] = [
   {
@@ -275,15 +249,6 @@ export default function Page() {
   } = usePackagesFilters(allPackages);
 
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
-  const [reservationData, setReservationData] = useState<{
-    hotel: Hotel;
-    room: RoomType;
-  } | null>(null);
-
-  const handleReserve = (hotel: Hotel, room: RoomType) => {
-    setReservationData({ hotel, room });
-    
-  };
 
   const benefits = [
     {
@@ -433,7 +398,6 @@ export default function Page() {
         <HotelDetailsModal
           hotel={selectedHotel}
           onClose={() => setSelectedHotel(null)}
-          onReserve={handleReserve}
         />
       )}
     </div>
