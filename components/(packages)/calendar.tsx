@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 import { useLanguageStore } from "@/lib/store";
+import { usePackageSearchStore } from "@/lib/package-search-store";
 
 type DateRangePickerProps = {
   isOpen: boolean;
@@ -12,15 +13,32 @@ type DateRangePickerProps = {
 export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
+  const checkIn = usePackageSearchStore((state) => state.checkIn);
+  const checkOut = usePackageSearchStore((state) => state.checkOut);
+  const setDates = usePackageSearchStore((state) => state.setDates);
 
   const monthNames =
     locale === "es"
       ? ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
       : ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date(2025, 10));
-  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(null);
-  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<Date>(
+    checkIn ? new Date(checkIn) : new Date()
+  );
+  const [selectedStartDate, setSelectedStartDate] = useState<Date | null>(
+    checkIn ? new Date(checkIn) : null
+  );
+  const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(
+    checkOut ? new Date(checkOut) : null
+  );
+
+  useEffect(() => {
+    setSelectedStartDate(checkIn ? new Date(checkIn) : null);
+    setSelectedEndDate(checkOut ? new Date(checkOut) : null);
+    if (checkIn) {
+      setCurrentMonth(new Date(checkIn));
+    }
+  }, [checkIn, checkOut]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -40,12 +58,15 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
     if (!selectedStartDate || (selectedStartDate && selectedEndDate)) {
       setSelectedStartDate(clickedDate);
       setSelectedEndDate(null);
+      setDates(clickedDate.toISOString(), null);
     } else if (clickedDate > selectedStartDate) {
       setSelectedEndDate(clickedDate);
+      setDates(selectedStartDate.toISOString(), clickedDate.toISOString());
       onToggle(); // cerrar cuando se elige rango
     } else {
       setSelectedStartDate(clickedDate);
       setSelectedEndDate(null);
+      setDates(clickedDate.toISOString(), null);
     }
   };
 
@@ -154,7 +175,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
             <div className="flex-1">
               <div className="flex justify-between items-center mb-4">
                 <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-full">
-                  ←
+                  &lt;
                 </button>
                 <h3 className="font-bold text-lg">
                   {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
@@ -185,7 +206,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
                     : currentMonth.getFullYear()}
                 </h3>
                 <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-full">
-                  →
+                  &gt;
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-1 mb-2">
@@ -206,3 +227,5 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
     </div>
   );
 }
+
+
