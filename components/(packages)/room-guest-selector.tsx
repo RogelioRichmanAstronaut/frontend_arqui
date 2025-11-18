@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Users } from "lucide-react";
 import { useLanguageStore } from "@/lib/store";
+import { usePackageSearchStore } from "@/lib/package-search-store";
 
 type GuestsRoomsSelectorProps = {
   isOpen: boolean;
@@ -11,7 +11,7 @@ type GuestsRoomsSelectorProps = {
 
 const MAX_PER_ROOM = 6;
 const MAX_ADULTS = 30;
-const MAX_ROOMS = 6;
+const MAX_ROOMS = 5;
 
 export function GuestsRoomsSelector({
   isOpen,
@@ -20,8 +20,11 @@ export function GuestsRoomsSelector({
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
-  const [adults, setAdults] = useState<number>(1);
-  const [rooms, setRooms] = useState<number>(1);
+  const adults = usePackageSearchStore((state) => state.adults);
+  const rooms = usePackageSearchStore((state) => state.rooms);
+  const setAdults = usePackageSearchStore((state) => state.setAdults);
+  const setRooms = usePackageSearchStore((state) => state.setRooms);
+  const reset = usePackageSearchStore((state) => state.reset);
 
   const handleIncrement = (type: "adults" | "rooms"): void => {
     if (type === "adults") {
@@ -52,12 +55,15 @@ export function GuestsRoomsSelector({
       if (rooms <= 1) return;
       const nextRooms = rooms - 1;
       if (adults > nextRooms * MAX_PER_ROOM) return;
+      setRooms(nextRooms);
+      if (adults < nextRooms) {
+        setAdults(nextRooms);
+      }
     }
   };
 
   const handleReset = () => {
-    setAdults(1);
-    setRooms(1);
+    reset();
   };
 
   return (
@@ -95,7 +101,7 @@ export function GuestsRoomsSelector({
                     : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
                 } transition-colors`}
               >
-                −
+                -
               </button>
               <span className="w-8 text-center font-medium">{adults}</span>
               <button
@@ -127,7 +133,7 @@ export function GuestsRoomsSelector({
                     : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
                 } transition-colors`}
               >
-                −
+                -
               </button>
               <span className="w-8 text-center font-medium">{rooms}</span>
               <button
@@ -164,3 +170,4 @@ export function GuestsRoomsSelector({
     </div>
   );
 }
+
