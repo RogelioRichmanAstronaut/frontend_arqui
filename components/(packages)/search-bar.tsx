@@ -6,6 +6,7 @@ import { Input } from "@/components/(ui)/input";
 import { Button } from "@/components/(ui)/button";
 import { Card, CardContent } from "@/components/(ui)/card";
 import { useLanguageStore } from "@/lib/store";
+import { usePackageSearchStore } from "@/lib/package-search-store";
 import { DateRangePicker } from "./calendar";
 import { GuestsRoomsSelector } from "./room-guest-selector";
 
@@ -14,6 +15,8 @@ export function PackagesSearchBar() {
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
   const [activePanel, setActivePanel] = useState<"dates" | "guests" | null>(null);
+  const destination = usePackageSearchStore((state) => state.destination);
+  const setDestination = usePackageSearchStore((state) => state.setDestination);
 
   const toggleDates = () => {
     setActivePanel((prev) => (prev === "dates" ? null : "dates"));
@@ -33,6 +36,8 @@ export function PackagesSearchBar() {
             <Input
               placeholder={t("Destino", "Destination")}
               className="pl-10"
+              value={destination}
+              onChange={(event) => setDestination(event.target.value)}
             />
           </div>
 
