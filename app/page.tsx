@@ -1,9 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { MapPin, Calendar, Users, Search } from "lucide-react"
 import { Button } from "@/components/(ui)/button"
-import { Input } from "@/components/(ui)/input"
 import { Card, CardContent } from "@/components/(ui)/card"
 import { useLanguageStore } from "@/lib/store"
 import { PackagesSearchBar } from "@/components/(packages)/search-bar"
@@ -54,15 +52,20 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <section className="relative h-[600px] flex items-center justify-center bg-gradient-to-b from-[#0A2540]/80 to-[#0A2540]/60 overflow-visible pb-32">
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            backgroundImage: "url(/placeholder.jpg)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A2540]/80 to-[#0A2540]/60 z-10" />
+        <video
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/placeholder.jpg"
+          aria-hidden="true"
+        >
+          <source src="/videos/hero-banner.mp4" type="video/mp4" />
+          {}
+          Tu navegador no soporta el elemento de video.
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/60 z-10" />
 
         <div className="container mx-auto px-4 lg:px-8 z-20 relative">
           <motion.div
@@ -73,14 +76,14 @@ export default function Home() {
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
               {t(
-                "Explore the world with a smile",
+                "Explora el mundo con una sonrisa",
                 "Explore the world with a smile"
               )}
             </h1>
             <p className="text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
               {t(
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit ut aliquam, purus sit amet luctus venenatis, lectus magna fringilla urna, porttitor rhoncus dolor purus non enim praesent elementum facilisis leo.",
-                "Lorem ipsum dolor sit amet, consectetur adipiscing elit ut aliquam, purus sit amet luctus venenatis, lectus magna fringilla urna, porttitor rhoncus dolor purus non enim praesent elementum facilisis leo."
+                "Descubre destinos únicos, vive experiencias inolvidables y crea recuerdos que durarán para siempre. Encuentra el paquete ideal combinando vuelos, hoteles y beneficios exclusivos para hacer de tu viaje algo extraordinario.",
+                "Discover unique destinations, live unforgettable experiences, and create memories that will last forever. Find the ideal package by combining flights, hotels, and exclusive benefits to make your trip extraordinary."
               )}
             </p>
           </motion.div>
