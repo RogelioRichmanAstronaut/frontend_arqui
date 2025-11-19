@@ -46,6 +46,23 @@ const parseDateFromInput = (dateString: string): string | null => {
   }
 };
 
+const calculateNights = (checkIn: string | null, checkOut: string | null): number => {
+  if (!checkIn || !checkOut) return 0;
+  try {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  } catch {
+    return 0;
+  }
+};
+
+const MAX_PER_ROOM = 6;
+const MAX_ADULTS = 30;
+const MAX_ROOMS = 5;
+
 export default function PackagesConfirmPage() {
   const router = useRouter();
   const hotel = usePackageReservationStore((state) => state.hotel);
@@ -57,7 +74,7 @@ export default function PackagesConfirmPage() {
   const isConfirming = useRef(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (!hotel && !hasRedirected.current && !isConfirming.current) {
       hasRedirected.current = true;
       router.replace("/packages");
@@ -86,10 +103,27 @@ export default function PackagesConfirmPage() {
 
     if (!searchDetails.adults || searchDetails.adults < 1) {
       errors.push("Debe haber al menos 1 adulto");
+    } else if (searchDetails.adults > MAX_ADULTS) {
+      errors.push(`El número máximo de adultos es ${MAX_ADULTS}`);
     }
 
     if (!searchDetails.rooms || searchDetails.rooms < 1) {
       errors.push("Debe haber al menos 1 habitación");
+    } else if (searchDetails.rooms > MAX_ROOMS) {
+      errors.push(`El número máximo de habitaciones es ${MAX_ROOMS}`);
+    }
+
+    // Validar relación entre adultos y habitaciones
+    if (searchDetails.adults && searchDetails.rooms) {
+      const minRoomsNeeded = Math.ceil(searchDetails.adults / MAX_PER_ROOM);
+      if (searchDetails.rooms < minRoomsNeeded) {
+        errors.push(
+          `Se necesitan al menos ${minRoomsNeeded} habitación${minRoomsNeeded > 1 ? "es" : ""} para ${searchDetails.adults} adulto${searchDetails.adults > 1 ? "s" : ""} (máximo ${MAX_PER_ROOM} por habitación)`
+        );
+      }
+      if (searchDetails.adults < searchDetails.rooms) {
+        errors.push("El número de adultos debe ser mayor o igual al número de habitaciones");
+      }
     }
 
     if (errors.length > 0) {
@@ -217,15 +251,10 @@ export default function PackagesConfirmPage() {
                   </div>
                   <Input
                     type="number"
-                    min="1"
                     value={searchDetails.adults}
-                    onChange={(e) => {
-                      updateSearchDetails({
-                        adults: parseInt(e.target.value) || 1,
-                      });
-                      setValidationError(null);
-                    }}
-                    className="w-full"
+                    disabled
+                    className="w-full bg-gray-50 cursor-not-allowed"
+                    readOnly
                   />
                 </div>
 
@@ -238,16 +267,14 @@ export default function PackagesConfirmPage() {
                   </div>
                   <Input
                     type="number"
-                    min="1"
                     value={searchDetails.rooms}
-                    onChange={(e) => {
-                      updateSearchDetails({
-                        rooms: parseInt(e.target.value) || 1,
-                      });
-                      setValidationError(null);
-                    }}
-                    className="w-full"
+                    disabled
+                    className="w-full bg-gray-50 cursor-not-allowed"
+                    readOnly
                   />
+                  <p className="text-xs text-gray-400">
+                    Para modificar, usa "Editar búsqueda"
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -280,11 +307,82 @@ export default function PackagesConfirmPage() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between border-t pt-4">
-                <p className="font-semibold text-[#0A2540]">Total estimado por noche</p>
-                <p className="text-xl font-bold text-[#00C2A8]">
-                  ${rooms.reduce((acc, room) => acc + room.precio, 0).toLocaleString("es-CO")}
-                </p>
+              <div className="space-y-3 border-t pt-4">
+                {(() => {
+                  const roomsRequested = searchDetails.rooms || 1;
+                  
+                  // Obtener todas las habitaciones disponibles del hotel ordenadas por precio
+                  const availableRooms = hotel.habitaciones
+                    .filter((room) => room.disponibilidad === "DISPONIBLE")
+                    .sort((a, b) => a.precio - b.precio);
+                  
+                  // Calcular el precio total
+                  let pricePerNight = 0;
+                  
+                  if (roomsRequested <= rooms.length) {
+                    // Si las habitaciones solicitadas son menores o iguales a las seleccionadas,
+                    // usar solo las habitaciones seleccionadas
+                    pricePerNight = rooms
+                      .slice(0, roomsRequested)
+                      .reduce((acc, room) => acc + room.precio, 0);
+                  } else {
+                    // Si se solicitan más habitaciones, usar las seleccionadas + las más económicas disponibles
+                    const selectedRoomsPrice = rooms.reduce((acc, room) => acc + room.precio, 0);
+                    const extraRoomsNeeded = roomsRequested - rooms.length;
+                    
+                    // Obtener las habitaciones más económicas que no estén ya seleccionadas
+                    const selectedRoomIds = new Set(rooms.map((room) => room.habitacion_id));
+                    const cheapestAvailableRooms = availableRooms
+                      .filter((room) => !selectedRoomIds.has(room.habitacion_id))
+                      .slice(0, extraRoomsNeeded);
+                    
+                    const extraRoomsPrice = cheapestAvailableRooms.reduce(
+                      (acc, room) => acc + room.precio,
+                      0
+                    );
+                    
+                    pricePerNight = selectedRoomsPrice + extraRoomsPrice;
+                  }
+                  
+                  const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
+                  const totalEstimated = pricePerNight * nights;
+
+                  return (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <p className="font-semibold text-[#0A2540]">Precio por noche</p>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-[#00C2A8]">
+                            ${pricePerNight.toLocaleString("es-CO")}
+                          </p>
+                          {roomsRequested > rooms.length && (
+                            <p className="text-xs text-gray-500">
+                              ({rooms.length} seleccionada{rooms.length > 1 ? "s" : ""} + {roomsRequested - rooms.length} adicional{roomsRequested - rooms.length > 1 ? "es" : ""} más económica{roomsRequested - rooms.length > 1 ? "s" : ""})
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {searchDetails.checkIn && searchDetails.checkOut && (
+                        <>
+                          <div className="flex items-center justify-between text-sm">
+                            <p className="text-gray-600">
+                              Noches: {nights}
+                            </p>
+                            <p className="text-gray-600">
+                              {formatDate(searchDetails.checkIn)} - {formatDate(searchDetails.checkOut)}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between border-t pt-2">
+                            <p className="font-bold text-lg text-[#0A2540]">Total estimado</p>
+                            <p className="text-2xl font-bold text-[#00C2A8]">
+                              ${totalEstimated.toLocaleString("es-CO")}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>
