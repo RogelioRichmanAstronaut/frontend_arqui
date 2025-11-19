@@ -80,47 +80,7 @@ export function Footer({ locale }: FooterProps) {
                 </a>
               </li>
             </ul>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-[#0A2540] text-lg mb-4">
-              {t("Redes sociales", "Social media")}
-            </h3>
-            <div className="flex gap-4">
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-[#00C2A8] transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-[#00C2A8] transition-colors"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-[#00C2A8] transition-colors"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a
-                href="https://youtube.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-[#00C2A8] transition-colors"
-              >
-                <Youtube className="h-5 w-5" />
-              </a>
-            </div>
-          </div>
+          </div>          
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-300 text-center text-sm text-gray-600">
