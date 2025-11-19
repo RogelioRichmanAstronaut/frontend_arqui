@@ -224,14 +224,12 @@ export default function FlightsPage() {
     <div className="min-h-screen bg-gray-50">
       <section className="relative h-[300px] flex items-center justify-center bg-gradient-to-b from-[#0A2540]/80 to-[#0A2540]/60">
         <div
-          className="absolute inset-0 z-0"
+          className="absolute inset-0 z-0 bg-center bg-cover"
           style={{
-            backgroundImage: "url(/placeholder.jpg)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundImage: "url('/images/banner/flight-banner.jpg')",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A2540]/80 to-[#0A2540]/60 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/60 z-10" />
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white z-20 tracking-[0.3em]">
           {t("V U E L O S", "F L I G H T S")}
         </h1>
