@@ -147,10 +147,6 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
 
                   <div className="border-t pt-4 flex flex-col gap-3">
                     <Button variant="outline" className="w-full justify-start gap-2">
-                      <Heart className="h-4 w-4" />
-                      {locale === "es" ? "Favoritos" : "Favorites"}
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start gap-2">
                       <Luggage className="h-4 w-4" />
                       {locale === "es" ? "Mis Viajes" : "My Trips"}
                     </Button>
