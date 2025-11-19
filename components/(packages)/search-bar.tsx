@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { MapPin, Search } from "lucide-react";
 import { Input } from "@/components/(ui)/input";
 import { Button } from "@/components/(ui)/button";
@@ -11,6 +12,7 @@ import { DateRangePicker } from "./calendar";
 import { GuestsRoomsSelector } from "./room-guest-selector";
 
 export function PackagesSearchBar() {
+  const router = useRouter();
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
@@ -24,6 +26,10 @@ export function PackagesSearchBar() {
 
   const toggleGuests = () => {
     setActivePanel((prev) => (prev === "guests" ? null : "guests"));
+  };
+
+  const handleSearch = () => {
+    router.push("/packages");
   };
 
   return (
@@ -54,7 +60,10 @@ export function PackagesSearchBar() {
           />
 
           {/* boton buscar */}
-          <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
+          <Button 
+            onClick={handleSearch}
+            className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white"
+          >
             <Search className="h-5 w-5 mr-2" />
             {t("Encuentra tu paquete", "Find your package")}
           </Button>
