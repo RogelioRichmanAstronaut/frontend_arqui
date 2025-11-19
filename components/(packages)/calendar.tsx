@@ -159,7 +159,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
       <button
         onClick={onToggle}
-        className="w-full h-10 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+        className="w-full h-12 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm whitespace-nowrap overflow-hidden text-ellipsis"
       >
         <span className="text-gray-700">
           {selectedStartDate && selectedEndDate
