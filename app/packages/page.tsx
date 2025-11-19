@@ -12,6 +12,7 @@ import { PriceFilter } from "@/components/(packages)/filters/price";
 import { StarsFilter } from "@/components/(packages)/filters/stars";
 import { DetailsFilter } from "@/components/(packages)/filters/details";
 import { usePackagesFilters } from "@/lib/hooks/packages-filters";
+import { BannerSection } from "@/components/banner-section";
 import type {
   Hotel,
   Package,
@@ -285,18 +286,11 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <section className="relative h-[300px] flex items-center justify-center bg-gradient-to-b from-[#0A2540]/80 to-[#0A2540]/60">
-        <div
-          className="absolute inset-0 z-0 bg-center bg-cover"
-          style={{
-            backgroundImage: "url('/images/banner/pack-banner.jpg')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/60 z-10" />
+      <BannerSection imageUrl="/images/banner/pack-banner.jpg">
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white z-20 tracking-[0.3em]">
           {t("P A Q U E T E S", "P A C K A G E S")}
         </h1>
-      </section>
+      </BannerSection>
 
       <section className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
         <PackagesSearchBar />

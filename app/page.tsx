@@ -112,14 +112,26 @@ export default function Home() {
               className="grid grid-cols-2 gap-4"
             >
               <div className="rounded-3xl overflow-hidden h-[400px]">
-                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600" />
+                <img
+                  src="/images/tripa.jpg"
+                  alt="Trip A"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="space-y-4">
                 <div className="rounded-3xl overflow-hidden h-[190px]">
-                  <div className="w-full h-full bg-gradient-to-br from-[#00C2A8] to-teal-600" />
+                  <img
+                    src="/images/trib.jpg"
+                    alt="Trip B"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="rounded-3xl overflow-hidden h-[190px]">
-                  <div className="w-full h-full bg-gradient-to-br from-amber-400 to-orange-600" />
+                  <img
+                    src="/images/tripc.jpg"
+                    alt="Trip C"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
             </motion.div>

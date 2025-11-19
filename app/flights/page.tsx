@@ -13,6 +13,7 @@ import { usePackageSearchStore } from "@/lib/package-search-store"
 import { DateRangePicker } from "@/components/(packages)/calendar"
 import { FlightCard, type Flight, type FlightClass } from "@/components/(flights)/flight-card"
 import { FlightDetailsModal } from "@/components/(flights)/flight-modal"
+import { BannerSection } from "@/components/banner-section"
 
 export default function FlightsPage() {
   const { locale } = useLanguageStore()
@@ -222,18 +223,11 @@ export default function FlightsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <section className="relative h-[300px] flex items-center justify-center bg-gradient-to-b from-[#0A2540]/80 to-[#0A2540]/60">
-        <div
-          className="absolute inset-0 z-0 bg-center bg-cover"
-          style={{
-            backgroundImage: "url('/images/banner/flight-banner.jpg')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/60 z-10" />
+      <BannerSection imageUrl="/images/banner/flight-banner.jpg">
         <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white z-20 tracking-[0.3em]">
           {t("V U E L O S", "F L I G H T S")}
         </h1>
-      </section>
+      </BannerSection>
 
       <section className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
         <Card className="shadow-2xl">
