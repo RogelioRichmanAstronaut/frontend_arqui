@@ -113,7 +113,7 @@ export default function Home() {
             >
               <div className="rounded-3xl overflow-hidden h-[400px]">
                 <img
-                  src="/images/tripa.jpg"
+                  src="/images/cards/tripa.jpg"
                   alt="Trip A"
                   className="w-full h-full object-cover"
                 />
@@ -121,14 +121,14 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="rounded-3xl overflow-hidden h-[190px]">
                   <img
-                    src="/images/trib.jpg"
+                    src="/images/cards/tripb.jpg"
                     alt="Trip B"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="rounded-3xl overflow-hidden h-[190px]">
                   <img
-                    src="/images/tripc.jpg"
+                    src="/images/cards/tripc.jpg"
                     alt="Trip C"
                     className="w-full h-full object-cover"
                   />
