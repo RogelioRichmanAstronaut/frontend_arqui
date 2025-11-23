@@ -263,12 +263,9 @@ export default function PackagesConfirmPage() {
                   <Input
                     type="text"
                     value={searchDetails.destination || ""}
-                    onChange={(e) => {
-                      updateSearchDetails({ destination: e.target.value });
-                      setValidationError(null);
-                    }}
-                    placeholder="Por definir"
-                    className="w-full"
+                    disabled
+                    readOnly
+                    className="w-full bg-gray-50 cursor-not-allowed"
                   />
                 </div>
 
