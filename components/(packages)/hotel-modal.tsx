@@ -18,6 +18,7 @@ import {
   Wine,
   Binoculars,
 } from "lucide-react";
+import NextImage from "next/image";
 import { useRouter } from "next/navigation";
 import { usePackageSearchStore } from "@/lib/package-search-store";
 import { usePackageReservationStore } from "@/lib/package-reservation-store";
@@ -142,14 +143,13 @@ export function HotelDetailsModal({ hotel, onClose }: HotelDetailsModalProps) {
 
         <div className="p-6 space-y-6">
           <div className="relative h-80 bg-gray-200 rounded-lg overflow-hidden group">
-            <img
+            <NextImage
               src={hotel.fotos[currentPhotoIndex]}
               alt={`${hotel.nombre} - Foto ${currentPhotoIndex + 1}`}
-              className="w-full h-full object-cover"
-              onError={(event) => {
-                (event.target as HTMLImageElement).src =
-                  "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop";
-              }}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 800px"
+              priority
             />
             {hotel.fotos.length > 1 && (
               <>
