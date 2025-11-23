@@ -5,6 +5,7 @@ import { Button } from "@/components/(ui)/button"
 import { Card, CardContent } from "@/components/(ui)/card"
 import { useLanguageStore } from "@/lib/store"
 import { PackagesSearchBar } from "@/components/(packages)/search-bar"
+import Image from "next/image"
 
 export default function Home() {
   const { locale } = useLanguageStore()
@@ -62,7 +63,7 @@ export default function Home() {
           aria-hidden="true"
         >
           <source src="/videos/hero-banner.mp4" type="video/mp4" />
-          {}
+          { }
           Tu navegador no soporta el elemento de video.
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/60 z-10" />
@@ -111,26 +112,32 @@ export default function Home() {
               viewport={{ once: true }}
               className="grid grid-cols-2 gap-4"
             >
-              <div className="rounded-3xl overflow-hidden h-[400px]">
-                <img
+              <div className="rounded-3xl overflow-hidden h-[400px] relative">
+                <Image
                   src="/images/cards/tripa.jpg"
                   alt="Trip A"
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
               <div className="space-y-4">
-                <div className="rounded-3xl overflow-hidden h-[190px]">
-                  <img
+                <div className="rounded-3xl overflow-hidden h-[190px] relative">
+                  <Image
                     src="/images/cards/tripb.jpg"
                     alt="Trip B"
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
-                <div className="rounded-3xl overflow-hidden h-[190px]">
-                  <img
-                    src="/images/cards/tripc.jpg"
+                <div className="rounded-3xl overflow-hidden h-[190px] relative">
+                  <Image
+                    src="/images/cards/tripc.jpeg"
                     alt="Trip C"
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
               </div>
@@ -162,53 +169,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-[#00C2A8] font-semibold mb-2">Top Paquetes</p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-[#0A2540]">
-              {t("Descubre tu pasión", "Discover your passion")}
-            </h2>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {packages.map((pkg, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative h-64 bg-gradient-to-br from-blue-400 to-blue-600" />
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-bold text-[#0A2540] mb-3">
-                      {pkg.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 whitespace-pre-line">
-                      {pkg.includes}
-                    </p>
-                    <div className="space-y-2 mb-4">
-                      <p className="text-2xl font-bold text-[#0A2540]">
-                        {t("Desde", "From")} {pkg.price}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        / {t("persona", "person")}
-                      </p>
-                      <p className="text-sm text-gray-600">{pkg.hotel}</p>
-                      <p className="text-sm text-gray-600">{pkg.airline}</p>
-                    </div>
-                    <Button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
-                      {t("Reservar ahora", "Book now")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
