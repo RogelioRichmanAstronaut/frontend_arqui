@@ -19,8 +19,8 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
 
   const monthNames =
     locale === "es"
-      ? ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
-      : ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      ? ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+      : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
   const [currentMonth, setCurrentMonth] = useState<Date>(
     checkIn ? new Date(checkIn) : new Date()
@@ -124,10 +124,9 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
           onClick={() => !isPast && handleDateClick(day, monthOffset)}
           disabled={isPast}
           className={`h-10 w-10 flex items-center justify-center rounded-full text-sm
-            ${
-              selected === "start" || selected === "end"
-                ? "bg-[#0071C2] text-white font-bold"
-                : ""
+            ${selected === "start" || selected === "end"
+              ? "bg-[#0071C2] text-white font-bold"
+              : ""
             }
             ${inRange ? "bg-[#E6F2FF]" : ""}
             ${isPast ? "text-gray-300 cursor-not-allowed" : ""}
@@ -159,7 +158,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
       <button
         onClick={onToggle}
-        className="w-full h-12 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm whitespace-nowrap overflow-hidden text-ellipsis"
+        className="w-full h-10 pl-10 pr-3 border border-input rounded-md text-left bg-white hover:border-[#00C2A8] focus:outline-none focus:ring-2 focus:ring-[#00C2A8] focus:border-transparent text-sm whitespace-nowrap overflow-hidden text-ellipsis"
       >
         <span className="text-gray-700">
           {selectedStartDate && selectedEndDate
@@ -183,7 +182,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
                 <div className="w-10" />
               </div>
               <div className="grid grid-cols-7 gap-1 mb-2">
-                {["Lu","Ma","Mi","Ju","Vi","Sa","Do"].map((day) => (
+                {["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map((day) => (
                   <div
                     key={day}
                     className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center"
@@ -210,7 +209,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
                 </button>
               </div>
               <div className="grid grid-cols-7 gap-1 mb-2">
-                {["Lu","Ma","Mi","Ju","Vi","Sa","Do"].map((day) => (
+                {["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"].map((day) => (
                   <div
                     key={day}
                     className="text-center text-xs font-semibold text-gray-600 h-8 flex items-center justify-center"

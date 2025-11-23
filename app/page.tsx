@@ -95,9 +95,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative z-30"
           >
-            <Card className="max-w-5xl mx-auto shadow-2xl relative">
-              <PackagesSearchBar />
-            </Card>
+            <PackagesSearchBar />
           </motion.div>
         </div>
       </section>
