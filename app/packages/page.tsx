@@ -33,7 +33,16 @@ export default function Page() {
       return pkg.hotel?.hotel_id === hotelFilter;
     }
     if (!destination) return true;
-    return pkg.hotel && destination.toLowerCase().includes(pkg.hotel.ciudad.toLowerCase());
+    const destLower = destination.toLowerCase();
+    const cityLower = pkg.hotel?.ciudad.toLowerCase() || "";
+    const countryLower = pkg.hotel?.pais.toLowerCase() || "";
+
+    return (
+      destLower.includes(cityLower) ||
+      destLower.includes(countryLower) ||
+      cityLower.includes(destLower) ||
+      countryLower.includes(destLower)
+    );
   });
 
   const {
