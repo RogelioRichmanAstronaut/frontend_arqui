@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { MapPin, Tag, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/(ui)/card";
@@ -27,21 +27,68 @@ export default function Page() {
 
   const destination = usePackageSearchStore((state) => state.destination);
   const hotelFilter = usePackageSearchStore((state) => state.hotelFilter);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
+
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+
+      if ((destination || hotelFilter) && searchBarRef.current) {
+        setTimeout(() => {
+          const searchBarPosition = searchBarRef.current?.offsetTop ? searchBarRef.current.offsetTop - 100 : 0;
+          window.scrollTo({
+            top: searchBarPosition,
+            behavior: 'smooth'
+          });
+        }, 100);
+      }
+    }
+  }, []);
+
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  };
 
   const packagesToDisplay = allPackages.filter((pkg) => {
     if (hotelFilter) {
       return pkg.hotel?.hotel_id === hotelFilter;
     }
     if (!destination) return true;
-    const destLower = destination.toLowerCase();
-    const cityLower = pkg.hotel?.ciudad.toLowerCase() || "";
-    const countryLower = pkg.hotel?.pais.toLowerCase() || "";
 
+    const normalizedDest = normalizeText(destination);
+    const normalizedCity = normalizeText(pkg.hotel?.ciudad || "");
+    const normalizedCountry = normalizeText(pkg.hotel?.pais || "");
+
+
+    let searchCountry = "";
+    let searchCity = normalizedDest;
+
+    if (normalizedDest.includes(",")) {
+      const parts = normalizedDest.split(",").map(p => p.trim());
+      if (parts.length >= 2) {
+        searchCountry = parts[0];
+        searchCity = parts[1];
+      }
+    } else {
+      if (normalizedCountry.includes(normalizedDest) || normalizedDest.includes(normalizedCountry)) {
+        return true;
+      }
+    }
+    if (searchCountry && searchCity) {
+      const countryMatches = normalizedCountry.includes(searchCountry) || searchCountry.includes(normalizedCountry);
+      const cityMatches = normalizedCity.includes(searchCity) || searchCity.includes(normalizedCity);
+      return countryMatches && cityMatches;
+    }
     return (
-      destLower.includes(cityLower) ||
-      destLower.includes(countryLower) ||
-      cityLower.includes(destLower) ||
-      countryLower.includes(destLower)
+      normalizedCity.includes(searchCity) ||
+      searchCity.includes(normalizedCity) ||
+      normalizedDest.includes(normalizedCity) ||
+      normalizedCity.includes(normalizedDest)
     );
   });
 
@@ -103,7 +150,7 @@ export default function Page() {
         </h1>
       </BannerSection>
 
-      <section className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
+      <section ref={searchBarRef} className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
         <PackagesSearchBar />
       </section>
 
