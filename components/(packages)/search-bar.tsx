@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Search, Building2 } from "lucide-react";
 import { Input } from "@/components/(ui)/input";
@@ -19,12 +19,20 @@ export function PackagesSearchBar() {
   const [activePanel, setActivePanel] = useState<"dates" | "guests" | null>(null);
 
 
+  const globalDestination = usePackageSearchStore((state) => state.destination);
+  const globalHotelFilter = usePackageSearchStore((state) => state.hotelFilter);
   const setGlobalDestination = usePackageSearchStore((state) => state.setDestination);
   const setGlobalHotelFilter = usePackageSearchStore((state) => state.setHotelFilter);
 
 
-  const [localDestination, setLocalDestination] = useState("");
-  const [localHotelFilter, setLocalHotelFilter] = useState<string | null>(null);
+  const [localDestination, setLocalDestination] = useState(globalDestination);
+  const [localHotelFilter, setLocalHotelFilter] = useState<string | null>(globalHotelFilter);
+
+
+  useEffect(() => {
+    setLocalDestination(globalDestination);
+    setLocalHotelFilter(globalHotelFilter);
+  }, [globalDestination, globalHotelFilter]);
 
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredDestinations, setFilteredDestinations] = useState<string[]>([]);
@@ -76,19 +84,27 @@ export function PackagesSearchBar() {
     setActivePanel((prev) => (prev === "guests" ? null : "guests"));
   };
 
-  const handleSearch = () => {
+  const handleSearch = (e?: React.MouseEvent<HTMLButtonElement>) => {
+
+    e?.preventDefault();
+    e?.stopPropagation();
 
     setGlobalDestination(localDestination);
     setGlobalHotelFilter(localHotelFilter);
+
+    const currentPath = window.location.pathname;
+    if (currentPath === "/packages") {
+      return;
+    }
     router.push("/packages");
   };
 
   return (
-    <Card className="shadow-2xl overflow-visible">
+    <Card className="shadow-2xl overflow-visible max-w-4xl mx-auto">
       <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           {/* destino */}
-          <div className="relative md:col-span-1 z-50">
+          <div className="relative flex-1 z-50">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
               placeholder={t("Destino o Hotel", "Destination or Hotel")}
@@ -150,21 +166,26 @@ export function PackagesSearchBar() {
           </div>
 
           {/* fechas */}
-          <DateRangePicker
-            isOpen={activePanel === "dates"}
-            onToggle={toggleDates}
-          />
+          <div className="flex-1">
+            <DateRangePicker
+              isOpen={activePanel === "dates"}
+              onToggle={toggleDates}
+            />
+          </div>
 
           {/* huespedes y habitaciones */}
-          <GuestsRoomsSelector
-            isOpen={activePanel === "guests"}
-            onToggle={toggleGuests}
-          />
+          <div className="flex-[1.5]">
+            <GuestsRoomsSelector
+              isOpen={activePanel === "guests"}
+              onToggle={toggleGuests}
+            />
+          </div>
 
           {/* boton buscar */}
           <Button
+            type="button"
             onClick={handleSearch}
-            className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white flex items-center justify-center"
+            className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white flex items-center justify-center h-10 w-12 px-0 shrink-0"
             aria-label={t("Buscar", "Search")}
           >
             <Search className="h-5 w-5" />
