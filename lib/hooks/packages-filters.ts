@@ -1,35 +1,6 @@
 import { useMemo, useState } from "react";
 
-interface RoomType {
-  habitacion_id: string;
-  tipo: string;
-  disponibilidad: string;
-  codigo_tipo_habitacion: string;
-  precio: number;
-  servicios_habitacion: string[];
-}
-
-interface Hotel {
-  hotel_id: string;
-  nombre: string;
-  categoria_estrellas: number;
-  ciudad: string;
-  direccion: string;
-  servicios_hotel: string[];
-  fotos: string[];
-  habitaciones: RoomType[];
-}
-
-interface Package {
-  title: string;
-  stars: number;
-  includes: string;
-  price: number;
-  displayPrice: string;
-  airline: string;
-  hasBreakfast: boolean;
-  hotel?: Hotel;
-}
+import type { Package } from "@/lib/types/packages";
 
 export function usePackagesFilters(allPackages: Package[]) {
   const [minPrice, setMinPrice] = useState<string>("");
