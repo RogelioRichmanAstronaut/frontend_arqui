@@ -75,12 +75,12 @@ export function GuestsRoomsSelector({
       >
         {adults > 0
           ? `${adults} ${t(
-              adults === 1 ? "huesped" : "huespedes",
-              adults === 1 ? "guest" : "guests"
-            )}, ${rooms} ${t(
-              rooms === 1 ? "habitacion" : "habitaciones",
-              rooms === 1 ? "room" : "rooms"
-            )}`
+            adults === 1 ? "huesped" : "huespedes",
+            adults === 1 ? "guest" : "guests"
+          )}, ${rooms} ${t(
+            rooms === 1 ? "habitacion" : "habitaciones",
+            rooms === 1 ? "room" : "rooms"
+          )}`
           : t("Huespedes y habitaciones", "Guests and rooms")}
       </button>
 
@@ -95,11 +95,10 @@ export function GuestsRoomsSelector({
               <button
                 onClick={() => handleDecrement("adults")}
                 disabled={adults <= 1}
-                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                  adults <= 1
-                    ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                    : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
-                } transition-colors`}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${adults <= 1
+                  ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                  : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                  } transition-colors`}
               >
                 -
               </button>
@@ -107,11 +106,10 @@ export function GuestsRoomsSelector({
               <button
                 onClick={() => handleIncrement("adults")}
                 disabled={adults >= MAX_ADULTS}
-                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                  adults >= MAX_ADULTS
-                    ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                    : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
-                } transition-colors`}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${adults >= MAX_ADULTS
+                  ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                  : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                  } transition-colors`}
               >
                 +
               </button>
@@ -127,11 +125,10 @@ export function GuestsRoomsSelector({
               <button
                 onClick={() => handleDecrement("rooms")}
                 disabled={rooms <= 1}
-                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                  rooms <= 1
-                    ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                    : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
-                } transition-colors`}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${rooms <= 1
+                  ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                  : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                  } transition-colors`}
               >
                 -
               </button>
@@ -139,22 +136,20 @@ export function GuestsRoomsSelector({
               <button
                 onClick={() => handleIncrement("rooms")}
                 disabled={rooms >= MAX_ROOMS}
-                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                  rooms >= MAX_ROOMS
-                    ? "border-gray-200 text-gray-300 cursor-not-allowed"
-                    : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
-                } transition-colors`}
+                className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${rooms >= MAX_ROOMS
+                  ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                  : "border-[#00C2A8] text-[#00C2A8] hover:bg-[#00C2A8] hover:text-white"
+                  } transition-colors`}
               >
                 +
               </button>
             </div>
           </div>
-
           {/* acciones */}
           <div className="flex justify-between mt-4">
             <button
               onClick={handleReset}
-              className="text-gray-400 hover:text-gray-600 text-sm font-medium"
+              className="text-[#00C2A8] hover:bg-[#00C2A8]/10 px-4 py-2 rounded-md text-sm font-semibold transition-colors"
             >
               {t("REINICIAR", "RESET")}
             </button>
