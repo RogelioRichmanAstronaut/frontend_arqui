@@ -19,220 +19,22 @@ import type {
   RoomType,
 } from "@/lib/types/packages";
 
-const allPackages: Package[] = [
-  {
-    title: "Water City Dreams",
-    stars: 4,
-    includes: "Vuelo directo + Traslado + Desayuno",
-    price: 1250000,
-    displayPrice: "$1.250.000 COP",
-    airline: "Aerolínea X",
-    hasBreakfast: true,
-    hotel: {
-      hotel_id: "HOT-001",
-      nombre: "Hotel Andes Plaza",
-      categoria_estrellas: 4,
-      ciudad: "Bogotá",
-      direccion: "Av. 15 #100-11",
-      servicios_hotel: ["wifi", "desayuno incluido", "gimnasio", "restaurante"],
-      fotos: [
-        "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1520619555298-1581cf47c1c0?w=800&h=600&fit=crop",
-      ],
-      habitaciones: [
-        {
-          habitacion_id: "HAB-001",
-          tipo: "Doble Estándar",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "DBL-STD",
-          precio: 320000,
-          servicios_habitacion: ["wifi", "tv", "aire acondicionado"],
-        },
-        {
-          habitacion_id: "HAB-002",
-          tipo: "Suite Ejecutiva",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "STE-EJEC",
-          precio: 580000,
-          servicios_habitacion: ["wifi", "tv", "jacuzzi", "minibar"],
-        },
-      ],
-    },
-  },
-  {
-    title: "Mountain Paradise",
-    stars: 3,
-    includes: "Vuelo directo + Traslado",
-    price: 850000,
-    displayPrice: "$850.000 COP",
-    airline: "Aerolínea Y",
-    hasBreakfast: false,
-    hotel: {
-      hotel_id: "HOT-003",
-      nombre: "Hotel Mountain View",
-      categoria_estrellas: 3,
-      ciudad: "Medellín",
-      direccion: "Calle 50 #15-25",
-      servicios_hotel: ["wifi", "restaurante", "terraza"],
-      fotos: [
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
-      ],
-      habitaciones: [
-        {
-          habitacion_id: "HAB-003",
-          tipo: "Doble Estándar",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "DBL-STD",
-          precio: 250000,
-          servicios_habitacion: ["wifi", "tv", "balcón"],
-        },
-      ],
-    },
-  },
-  {
-    title: "Luxury Beach Resort",
-    stars: 5,
-    includes: "Vuelo directo + Traslado + Desayuno + Cena",
-    price: 2500000,
-    displayPrice: "$2.500.000 COP",
-    airline: "Aerolínea Z",
-    hasBreakfast: true,
-    hotel: {
-      hotel_id: "HOT-002",
-      nombre: "Hotel Tequendama",
-      categoria_estrellas: 5,
-      ciudad: "Cartagena",
-      direccion: "Carrera 10 #26-21",
-      servicios_hotel: ["wifi", "spa", "piscina", "restaurante gourmet"],
-      fotos: [
-        "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1551632786-de41ec16a vector?w=800&h=600&fit=crop",
-      ],
-      habitaciones: [
-        {
-          habitacion_id: "HAB-010",
-          tipo: "Suite Presidencial",
-          disponibilidad: "NO DISPONIBLE",
-          codigo_tipo_habitacion: "STE-PRES",
-          precio: 1200000,
-          servicios_habitacion: ["wifi", "tv", "jacuzzi", "vista panorámica"],
-        },
-        {
-          habitacion_id: "HAB-011",
-          tipo: "Suite Deluxe",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "STE-DELUX",
-          precio: 850000,
-          servicios_habitacion: ["wifi", "tv", "jacuzzi", "minibar", "vista al mar"],
-        },
-      ],
-    },
-  },
-  {
-    title: "City Explorer",
-    stars: 4,
-    includes: "Vuelo directo + Traslado + Desayuno",
-    price: 1100000,
-    displayPrice: "$1.100.000 COP",
-    airline: "Aerolínea X",
-    hasBreakfast: true,
-    hotel: {
-      hotel_id: "HOT-004",
-      nombre: "Hotel City Center",
-      categoria_estrellas: 4,
-      ciudad: "Cali",
-      direccion: "Av. Colombia #5-50",
-      servicios_hotel: ["wifi", "gimnasio", "restaurante", "bar"],
-      fotos: [
-        "https://images.unsplash.com/photo-1564501049351-005e2ccb1144?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
-      ],
-      habitaciones: [
-        {
-          habitacion_id: "HAB-004",
-          tipo: "Doble Deluxe",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "DBL-DELUX",
-          precio: 400000,
-          servicios_habitacion: ["wifi", "tv", "minibar", "vista a la ciudad"],
-        },
-      ],
-    },
-  },
-  {
-    title: "Budget Adventure",
-    stars: 2,
-    includes: "Vuelo directo + Traslado",
-    price: 650000,
-    displayPrice: "$650.000 COP",
-    airline: "Aerolínea Y",
-    hasBreakfast: false,
-    hotel: {
-      hotel_id: "HOT-005",
-      nombre: "Hotel Budget Plus",
-      categoria_estrellas: 2,
-      ciudad: "Santa Marta",
-      direccion: "Calle 1 #2-10",
-      servicios_hotel: ["wifi", "restaurante"],
-      fotos: [
-        "https://images.unsplash.com/photo-1585132991992-378a50ee3015?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&h=600&fit=crop",
-      ],
-      habitaciones: [
-        {
-          habitacion_id: "HAB-005",
-          tipo: "Habitación Doble",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "DOBLE",
-          precio: 180000,
-          servicios_habitacion: ["wifi", "tv"],
-        },
-      ],
-    },
-  },
-  {
-    title: "Premium Experience",
-    stars: 5,
-    includes: "Vuelo directo + Traslado + Desayuno + Spa",
-    price: 3200000,
-    displayPrice: "$3.200.000 COP",
-    airline: "Aerolínea Z",
-    hasBreakfast: true,
-    hotel: {
-      hotel_id: "HOT-006",
-      nombre: "Hotel Spa Luxury",
-      categoria_estrellas: 5,
-      ciudad: "Santa Marta",
-      direccion: "Av. Costanera #100-1",
-      servicios_hotel: [
-        "wifi",
-        "spa completo",
-        "piscina infinity",
-        "restaurante 5 estrellas",
-        "playa privada",
-      ],
-      fotos: [
-        "https://images.unsplash.com/photo-1571003123894-169f27e0c0d4?w=800&h=600&fit=crop",
-        "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
-      ],
-      habitaciones: [
-        {
-          habitacion_id: "HAB-006",
-          tipo: "Villa Privada",
-          disponibilidad: "DISPONIBLE",
-          codigo_tipo_habitacion: "VILLA",
-          precio: 1500000,
-          servicios_habitacion: ["wifi", "jacuzzi privado", "piscina", "butler", "vista al océano"],
-        },
-      ],
-    },
-  },
-];
-
+import { usePackageSearchStore } from "@/lib/package-search-store";
+import { allPackages } from "@/lib/data/packages";
 export default function Page() {
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
+
+  const destination = usePackageSearchStore((state) => state.destination);
+  const hotelFilter = usePackageSearchStore((state) => state.hotelFilter);
+
+  const packagesToDisplay = allPackages.filter((pkg) => {
+    if (hotelFilter) {
+      return pkg.hotel?.hotel_id === hotelFilter;
+    }
+    if (!destination) return true;
+    return pkg.hotel && destination.toLowerCase().includes(pkg.hotel.ciudad.toLowerCase());
+  });
 
   const {
     minPrice,
@@ -247,7 +49,7 @@ export default function Page() {
     handleStarToggle,
     handleMinPriceChange,
     handleMaxPriceChange,
-  } = usePackagesFilters(allPackages);
+  } = usePackagesFilters(packagesToDisplay);
 
   const [selectedHotel, setSelectedHotel] = useState<Hotel | null>(null);
 
@@ -278,8 +80,8 @@ export default function Page() {
         "Exclusive benefits and experiences"
       ),
       description: t(
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed arcu eu, dui tortor, proin eu lectus pellentesque. A cras suscipit amet",
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed arcu eu, dui tortor, proin eu lectus pellentesque. A cras suscipit amet"
+        "En Trip-In te conectamos con oportunidades únicas diseñadas para elevar cada viaje. Disfruta de ventajas especiales, acceso prioritario, recomendaciones personalizadas y experiencias que no encontrarás en ningún otro lugar. Viajar no es solo llegar al destino, es vivir momentos inolvidables desde el primer clic.",
+        "At Trip-In, we connect you with unique opportunities designed to elevate every journey. Enjoy special perks, priority access, personalized recommendations, and experiences you won’t find anywhere else. Traveling isn’t just about reaching the destination — it’s about creating unforgettable moments from the very first click."
       ),
     },
   ];
