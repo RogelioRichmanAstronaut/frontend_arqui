@@ -2,13 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Heart, Luggage, User, Menu } from "lucide-react"
+import { Menu, User, LogOut } from "lucide-react"
 import { Button } from "@/components/(ui)/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/(ui)/dropdown-menu"
 import {
   Sheet,
@@ -16,6 +17,7 @@ import {
   SheetTrigger,
 } from "@/components/(ui)/sheet"
 import { useState } from "react"
+import { useAuthStore } from "@/lib/auth-store"
 
 interface NavbarProps {
   locale: string
@@ -25,6 +27,7 @@ interface NavbarProps {
 export function Navbar({ locale, onLocaleChange }: NavbarProps) {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const { isAuthenticated, logout } = useAuthStore()
 
   const navLinks = [
     { href: "/", label: { es: "Inicio", en: "Home" } },
@@ -70,9 +73,8 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative text-sm font-medium transition-colors hover:text-[#00C2A8] ${
-                    isActive ? "text-[#00C2A8]" : "text-[#0A2540]"
-                  }`}
+                  className={`relative text-sm font-medium transition-colors hover:text-[#00C2A8] ${isActive ? "text-[#00C2A8]" : "text-[#0A2540]"
+                    }`}
                 >
                   {t(link.label)}
                   {isActive && (
@@ -84,31 +86,34 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Heart className="h-5 w-5 text-[#0A2540]" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hidden md:flex">
-              <Luggage className="h-5 w-5 text-[#0A2540]" />
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden md:flex">
-                  <User className="h-5 w-5 text-[#0A2540]" />
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hidden md:flex">
+                    <User className="h-5 w-5 text-[#0A2540]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    {locale === "es" ? "Perfil" : "Profile"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    {locale === "es" ? "Reservas" : "Bookings"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {locale === "es" ? "Cerrar sesión" : "Sign out"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/auth">
+                <Button variant="default" className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white hidden md:flex">
+                  {locale === "es" ? "Iniciar sesión" : "Login"}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  {locale === "es" ? "Perfil" : "Profile"}
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  {locale === "es" ? "Reservas" : "Bookings"}
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  {locale === "es" ? "Cerrar sesión" : "Sign out"}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </Link>
+            )}
 
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
@@ -145,15 +150,32 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
                     </Link>
                   ))}
 
-                  <div className="border-t pt-4 flex flex-col gap-3">
-                    <Button variant="outline" className="w-full justify-start gap-2">
-                      <Luggage className="h-4 w-4" />
-                      {locale === "es" ? "Mis Viajes" : "My Trips"}
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start gap-2">
-                      <User className="h-4 w-4" />
-                      {locale === "es" ? "Perfil" : "Profile"}
-                    </Button>
+                  <div className="border-t pt-4">
+                    {isAuthenticated ? (
+                      <div className="flex flex-col gap-2">
+                        <Button variant="ghost" className="w-full justify-start gap-2">
+                          <User className="h-4 w-4" />
+                          {locale === "es" ? "Perfil" : "Profile"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            logout()
+                            setIsOpen(false)
+                          }}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          {locale === "es" ? "Cerrar sesión" : "Sign out"}
+                        </Button>
+                      </div>
+                    ) : (
+                      <Link href="/auth" onClick={() => setIsOpen(false)}>
+                        <Button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white">
+                          {locale === "es" ? "Iniciar sesión" : "Login"}
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </SheetContent>
