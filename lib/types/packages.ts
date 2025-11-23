@@ -12,6 +12,7 @@ export interface Hotel {
   nombre: string;
   categoria_estrellas: number;
   ciudad: string;
+  pais: string;
   direccion: string;
   servicios_hotel: string[];
   fotos: string[];

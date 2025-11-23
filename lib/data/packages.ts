@@ -14,6 +14,7 @@ export const allPackages: Package[] = [
             nombre: "Hotel Andes Plaza",
             categoria_estrellas: 4,
             ciudad: "Bogotá",
+            pais: "Colombia",
             direccion: "Av. 15 #100-11",
             servicios_hotel: ["wifi", "desayuno incluido", "gimnasio", "restaurante"],
             fotos: [
@@ -53,6 +54,7 @@ export const allPackages: Package[] = [
             nombre: "Hotel Mountain View",
             categoria_estrellas: 3,
             ciudad: "Medellín",
+            pais: "Colombia",
             direccion: "Calle 50 #15-25",
             servicios_hotel: ["wifi", "restaurante", "terraza"],
             fotos: [
@@ -84,6 +86,7 @@ export const allPackages: Package[] = [
             nombre: "Hotel Tequendama",
             categoria_estrellas: 5,
             ciudad: "Cartagena",
+            pais: "Colombia",
             direccion: "Carrera 10 #26-21",
             servicios_hotel: ["wifi", "spa", "piscina", "restaurante gourmet"],
             fotos: [
@@ -123,6 +126,7 @@ export const allPackages: Package[] = [
             nombre: "Hotel City Center",
             categoria_estrellas: 4,
             ciudad: "Cali",
+            pais: "Colombia",
             direccion: "Av. Colombia #5-50",
             servicios_hotel: ["wifi", "gimnasio", "restaurante", "bar"],
             fotos: [
@@ -154,6 +158,7 @@ export const allPackages: Package[] = [
             nombre: "Hotel Budget Plus",
             categoria_estrellas: 2,
             ciudad: "Santa Marta",
+            pais: "Colombia",
             direccion: "Calle 1 #2-10",
             servicios_hotel: ["wifi", "restaurante"],
             fotos: [
@@ -185,6 +190,7 @@ export const allPackages: Package[] = [
             nombre: "Hotel Spa Luxury",
             categoria_estrellas: 5,
             ciudad: "Santa Marta",
+            pais: "Colombia",
             direccion: "Av. Costanera #100-1",
             servicios_hotel: [
                 "wifi",
