@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { X, Plane, Clock, MapPin } from "lucide-react";
 import { useLanguageStore } from "@/lib/store";
 import { useFlightsStore } from "@/lib/flights-store";
+import { useFlightReservationStore } from "@/lib/flight-reservation-store";
 import type { Flight, FlightClass } from "./flight-card";
 
 interface FlightDetailsModalProps {
@@ -12,9 +14,15 @@ interface FlightDetailsModalProps {
 }
 
 export function FlightDetailsModal({ flight, onClose }: FlightDetailsModalProps) {
+  const router = useRouter();
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
   const passengers = useFlightsStore((state) => state.passengers);
+  const origin = useFlightsStore((state) => state.origin);
+  const destination = useFlightsStore((state) => state.destination);
+  const departureDate = useFlightsStore((state) => state.departureDate);
+  const returnDate = useFlightsStore((state) => state.returnDate);
+  const setReservation = useFlightReservationStore((state) => state.setReservation);
   
   const [classSelections, setClassSelections] = useState<(FlightClass | null)[]>(
     () => Array.from({ length: passengers }, () => null)
@@ -49,9 +57,23 @@ export function FlightDetailsModal({ flight, onClose }: FlightDetailsModalProps)
 
   const handleConfirm = () => {
     if (!canConfirm) return;
-    // Aquí puedes agregar la lógica para guardar la selección
-    console.log("Flight confirmed:", flight, "Classes:", selectedClasses);
+    
+    // Save flight reservation data
+    setReservation({
+      flight,
+      selectedClasses,
+      searchDetails: {
+        origin,
+        destination,
+        departureDate,
+        returnDate,
+        passengers,
+      },
+    });
+    
+    // Close modal and redirect to confirm page
     onClose();
+    router.push("/flights/confirm");
   };
 
   return (

@@ -26,7 +26,7 @@ export interface Flight {
 interface FlightCardProps {
   flight: Flight;
   index: number;
-  onSelect?: (flight: Flight, selectedClass: FlightClass) => void;
+  onSelect?: (flight: Flight, selectedClass?: FlightClass) => void;
 }
 
 export function FlightCard({ flight, index, onSelect }: FlightCardProps) {
@@ -42,8 +42,8 @@ export function FlightCard({ flight, index, onSelect }: FlightCardProps) {
   };
 
   const handleSelect = () => {
-    if (selectedClass && onSelect) {
-      onSelect(flight, selectedClass);
+    if (onSelect) {
+      onSelect(flight, selectedClass || undefined);
     }
   };
 
@@ -83,7 +83,7 @@ export function FlightCard({ flight, index, onSelect }: FlightCardProps) {
             </div>
           </div>
 
-          <div className="mb-4 space-y-2">
+          {/*<div className="mb-4 space-y-2">
             <p className="text-sm font-medium text-[#0A2540]">
               {t("Selecciona tu clase", "Select your class")}
             </p>
@@ -102,9 +102,9 @@ export function FlightCard({ flight, index, onSelect }: FlightCardProps) {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
-          {selectedClass && (
+          {/*{selectedClass && (
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-center">
                 <div>
@@ -122,11 +122,11 @@ export function FlightCard({ flight, index, onSelect }: FlightCardProps) {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           <Button
             onClick={handleSelect}
-            disabled={!selectedClass}
+            //disabled={!selectedClass}
             className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-semibold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t("Seleccionar vuelo", "Select flight")}

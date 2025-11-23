@@ -216,7 +216,7 @@ export default function FlightsPage() {
     },
   ]
 
-  const handleFlightSelect = (flight: Flight, selectedClass: FlightClass) => {
+  const handleFlightSelect = (flight: Flight, selectedClass?: FlightClass) => {
     // Abrir el modal con los detalles del vuelo
     setSelectedFlight(flight)
   }
