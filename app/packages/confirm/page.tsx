@@ -8,6 +8,11 @@ import { Button } from "@/components/(ui)/button";
 import { Input } from "@/components/(ui)/input";
 import { Alert, AlertDescription } from "@/components/(ui)/alert";
 import { usePackageReservationStore } from "@/lib/package-reservation-store";
+import { useBookingsStore } from "@/lib/bookings-store";
+import { useNotificationsStore } from "@/lib/notifications-store";
+import { v4 as uuidv4 } from 'uuid';
+
+
 
 const formatDate = (iso: string | null) => {
   if (!iso) return "Por definir";
@@ -72,14 +77,23 @@ export default function PackagesConfirmPage() {
   const reset = usePackageReservationStore((state) => state.reset);
   const hasRedirected = useRef(false);
   const isConfirming = useRef(false);
+  const { addBooking } = useBookingsStore();
+  const { addNotification } = useNotificationsStore();
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (!hotel && !hasRedirected.current && !isConfirming.current) {
       hasRedirected.current = true;
       router.replace("/packages");
     }
   }, [hotel, router]);
+
+  useEffect(() => {
+    if (hotel && searchDetails && (!searchDetails.destination || searchDetails.destination.trim() === "")) {
+      // Infer destination from hotel city and country
+      updateSearchDetails({ destination: `${hotel.pais}, ${hotel.ciudad}` });
+    }
+  }, [hotel, searchDetails, updateSearchDetails]);
 
   const validateFields = (): boolean => {
     if (!searchDetails) {
@@ -135,23 +149,75 @@ export default function PackagesConfirmPage() {
     return true;
   };
 
-  const handleConfirm = () => {
+
+
+  const handleConfirm = async () => {
     if (!validateFields()) {
       return;
     }
 
-    // Marcar que estamos confirmando ANTES de cualquier operación
-    // Esto previene que el useEffect redirija a /packages
+    if (!hotel || !searchDetails) return;
+
+    // Calculate price logic (duplicated for now to ensure data consistency)
+    const roomsRequested = searchDetails.rooms || 1;
+    const availableRooms = hotel.habitaciones
+      .filter((room) => room.disponibilidad === "DISPONIBLE")
+      .sort((a, b) => a.precio - b.precio);
+
+    let pricePerNight = 0;
+    let finalRooms = [...rooms];
+
+    if (roomsRequested <= rooms.length) {
+      pricePerNight = rooms
+        .slice(0, roomsRequested)
+        .reduce((acc, room) => acc + room.precio, 0);
+      finalRooms = rooms.slice(0, roomsRequested);
+    } else {
+      const selectedRoomsPrice = rooms.reduce((acc, room) => acc + room.precio, 0);
+      const extraRoomsNeeded = roomsRequested - rooms.length;
+      const selectedRoomIds = new Set(rooms.map((room) => room.habitacion_id));
+      const cheapestAvailableRooms = availableRooms
+        .filter((room) => !selectedRoomIds.has(room.habitacion_id))
+        .slice(0, extraRoomsNeeded);
+
+      const extraRoomsPrice = cheapestAvailableRooms.reduce((acc, room) => acc + room.precio, 0);
+      pricePerNight = selectedRoomsPrice + extraRoomsPrice;
+      finalRooms = [...rooms, ...cheapestAvailableRooms];
+    }
+
+    const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
+    const totalEstimated = pricePerNight * nights;
+
+    // Save booking
+    addBooking({
+      id: uuidv4(),
+      date: new Date().toISOString(),
+      hotel: hotel,
+      rooms: finalRooms,
+      checkIn: searchDetails.checkIn || new Date().toISOString(),
+      checkOut: searchDetails.checkOut || new Date().toISOString(),
+      totalPrice: totalEstimated,
+      status: 'confirmed'
+    });
+
+    // Add notification
+    addNotification({
+      id: uuidv4(),
+      title: 'Reserva Confirmada',
+      message: `Tu reserva en ${hotel.nombre} ha sido confirmada exitosamente.`,
+      date: new Date().toISOString(),
+      read: false,
+      type: 'success'
+    });
+
     isConfirming.current = true;
-    
-    // Navegar a flights usando replace para evitar problemas de historial
-    router.replace("/flights");
-    
-    // Resetear el estado después de un delay para asegurar que la navegación se procese
-    setTimeout(() => {
-      reset();
-      isConfirming.current = false;
-    }, 500);
+
+    try {
+      // Redirect to flights page as per user request
+      await router.replace("/flights");
+    } catch (e) {
+      // ...
+    }
   };
 
   if (!hotel || !searchDetails) {
@@ -310,15 +376,15 @@ export default function PackagesConfirmPage() {
               <div className="space-y-3 border-t pt-4">
                 {(() => {
                   const roomsRequested = searchDetails.rooms || 1;
-                  
+
                   // Obtener todas las habitaciones disponibles del hotel ordenadas por precio
                   const availableRooms = hotel.habitaciones
                     .filter((room) => room.disponibilidad === "DISPONIBLE")
                     .sort((a, b) => a.precio - b.precio);
-                  
+
                   // Calcular el precio total
                   let pricePerNight = 0;
-                  
+
                   if (roomsRequested <= rooms.length) {
                     // Si las habitaciones solicitadas son menores o iguales a las seleccionadas,
                     // usar solo las habitaciones seleccionadas
@@ -329,21 +395,21 @@ export default function PackagesConfirmPage() {
                     // Si se solicitan más habitaciones, usar las seleccionadas + las más económicas disponibles
                     const selectedRoomsPrice = rooms.reduce((acc, room) => acc + room.precio, 0);
                     const extraRoomsNeeded = roomsRequested - rooms.length;
-                    
+
                     // Obtener las habitaciones más económicas que no estén ya seleccionadas
                     const selectedRoomIds = new Set(rooms.map((room) => room.habitacion_id));
                     const cheapestAvailableRooms = availableRooms
                       .filter((room) => !selectedRoomIds.has(room.habitacion_id))
                       .slice(0, extraRoomsNeeded);
-                    
+
                     const extraRoomsPrice = cheapestAvailableRooms.reduce(
                       (acc, room) => acc + room.precio,
                       0
                     );
-                    
+
                     pricePerNight = selectedRoomsPrice + extraRoomsPrice;
                   }
-                  
+
                   const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
                   const totalEstimated = pricePerNight * nights;
 
