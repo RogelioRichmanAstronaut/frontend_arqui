@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/(ui)/alert";
 import { usePackageReservationStore } from "@/lib/package-reservation-store";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { useNotificationsStore } from "@/lib/notifications-store";
+import { usePaymentStore } from "@/lib/payment-store";
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -79,6 +80,7 @@ export default function PackagesConfirmPage() {
   const isConfirming = useRef(false);
   const { addBooking } = useBookingsStore();
   const { addNotification } = useNotificationsStore();
+  const { setPaymentInfo } = usePaymentStore();
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -188,7 +190,7 @@ export default function PackagesConfirmPage() {
     const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
     const totalEstimated = pricePerNight * nights;
 
-    // Save booking
+    // Save booking (will be updated to 'confirmed' after payment)
     addBooking({
       id: uuidv4(),
       date: new Date().toISOString(),
@@ -197,23 +199,13 @@ export default function PackagesConfirmPage() {
       checkIn: searchDetails.checkIn || new Date().toISOString(),
       checkOut: searchDetails.checkOut || new Date().toISOString(),
       totalPrice: totalEstimated,
-      status: 'confirmed'
-    });
-
-    // Add notification
-    addNotification({
-      id: uuidv4(),
-      title: 'Reserva Confirmada',
-      message: `Tu reserva en ${hotel.nombre} ha sido confirmada exitosamente.`,
-      date: new Date().toISOString(),
-      read: false,
-      type: 'success'
+      status: 'pending'
     });
 
     isConfirming.current = true;
 
     try {
-      // Redirect to flights page as per user request
+      // Redirect to flights page to select flight
       await router.replace("/flights");
     } catch (e) {
       // ...

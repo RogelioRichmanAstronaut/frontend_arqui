@@ -8,8 +8,10 @@ import { Button } from "@/components/(ui)/button";
 import { Input } from "@/components/(ui)/input";
 import { Alert, AlertDescription } from "@/components/(ui)/alert";
 import { useFlightReservationStore } from "@/lib/flight-reservation-store";
+import { usePackageReservationStore } from "@/lib/package-reservation-store";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { useNotificationsStore } from "@/lib/notifications-store";
+import { usePaymentStore } from "@/lib/payment-store";
 import { v4 as uuidv4 } from 'uuid';
 import { useLanguageStore } from "@/lib/store";
 import type { Flight, FlightClass } from "@/components/(flights)/flight-card";
@@ -51,6 +53,19 @@ const parseDateFromInput = (dateString: string): string | null => {
   }
 };
 
+const calculateNights = (checkIn: string | null, checkOut: string | null): number => {
+  if (!checkIn || !checkOut) return 0;
+  try {
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  } catch {
+    return 0;
+  }
+};
+
 export default function FlightsConfirmPage() {
   const router = useRouter();
   const { locale } = useLanguageStore();
@@ -60,10 +75,17 @@ export default function FlightsConfirmPage() {
   const selectedClasses = useFlightReservationStore((state) => state.selectedClasses);
   const searchDetails = useFlightReservationStore((state) => state.searchDetails);
   const updateSearchDetails = useFlightReservationStore((state) => state.updateSearchDetails);
+  
+  // Get package reservation data
+  const packageHotel = usePackageReservationStore((state) => state.hotel);
+  const packageRooms = usePackageReservationStore((state) => state.rooms);
+  const packageSearchDetails = usePackageReservationStore((state) => state.searchDetails);
+  
   const hasRedirected = useRef(false);
   const isConfirming = useRef(false);
   const { addFlightBooking } = useBookingsStore();
   const { addNotification } = useNotificationsStore();
+  const { setPaymentInfo } = usePaymentStore();
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -117,9 +139,57 @@ export default function FlightsConfirmPage() {
 
     if (!flight || !searchDetails) return;
 
-    const totalPrice = selectedClasses.reduce((acc, cls) => acc + cls.price, 0);
+    // Calculate flight total
+    const flightTotal = selectedClasses.reduce((acc, cls) => acc + cls.price, 0);
 
-    // Save flight booking
+    // Calculate package total if package reservation exists
+    let packageTotal = 0;
+    let packageDescription = "";
+    
+    if (packageHotel && packageSearchDetails && packageRooms.length > 0) {
+      const roomsRequested = packageSearchDetails.rooms || 1;
+      const availableRooms = packageHotel.habitaciones
+        .filter((room) => room.disponibilidad === "DISPONIBLE")
+        .sort((a, b) => a.precio - b.precio);
+
+      let pricePerNight = 0;
+      if (roomsRequested <= packageRooms.length) {
+        pricePerNight = packageRooms
+          .slice(0, roomsRequested)
+          .reduce((acc, room) => acc + room.precio, 0);
+      } else {
+        const selectedRoomsPrice = packageRooms.reduce((acc, room) => acc + room.precio, 0);
+        const extraRoomsNeeded = roomsRequested - packageRooms.length;
+        const selectedRoomIds = new Set(packageRooms.map((room) => room.habitacion_id));
+        const cheapestAvailableRooms = availableRooms
+          .filter((room) => !selectedRoomIds.has(room.habitacion_id))
+          .slice(0, extraRoomsNeeded);
+        const extraRoomsPrice = cheapestAvailableRooms.reduce((acc, room) => acc + room.precio, 0);
+        pricePerNight = selectedRoomsPrice + extraRoomsPrice;
+      }
+
+      const nights = calculateNights(packageSearchDetails.checkIn, packageSearchDetails.checkOut);
+      packageTotal = pricePerNight * nights;
+      packageDescription = `Paquete ${packageHotel.nombre} #${packageHotel.hotel_id}`;
+    }
+
+    // Calculate total amount (package + flight)
+    const totalAmount = packageTotal + flightTotal;
+
+    // Build description
+    const descriptions = [];
+    if (packageDescription) descriptions.push(packageDescription);
+    descriptions.push(`Vuelo ${flight.airline} #${flight.flightId}`);
+    const description = descriptions.join(" + ");
+
+    // Set payment information for bank page with total amount
+    setPaymentInfo({
+      paymentType: packageHotel ? "package" : "flight", // Use package type if both exist
+      totalAmount: totalAmount,
+      description: description,
+    });
+
+    // Save flight booking (will be updated to 'confirmed' after payment)
     addFlightBooking({
       id: uuidv4(),
       date: new Date().toISOString(),
@@ -130,28 +200,15 @@ export default function FlightsConfirmPage() {
       departureDate: searchDetails.departureDate || new Date().toISOString(),
       returnDate: searchDetails.returnDate,
       passengers: searchDetails.passengers,
-      totalPrice: totalPrice,
-      status: 'confirmed'
-    });
-
-    // Add notification
-    addNotification({
-      id: uuidv4(),
-      title: t('Reserva Confirmada', 'Reservation Confirmed'),
-      message: t(
-        `Tu vuelo con ${flight.airline} ha sido confirmado exitosamente.`,
-        `Your flight with ${flight.airline} has been successfully confirmed.`
-      ),
-      date: new Date().toISOString(),
-      read: false,
-      type: 'success'
+      totalPrice: flightTotal,
+      status: 'pending'
     });
 
     isConfirming.current = true;
 
     try {
-      // Redirect to profile or home page
-      await router.replace("/profile/bookings");
+      // Redirect to bank payment page
+      await router.replace("/bank");
     } catch (e) {
       // ...
     }
