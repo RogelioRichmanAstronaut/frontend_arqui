@@ -47,7 +47,7 @@ export default function AuthPage() {
                     playsInline
                     poster="/placeholder.jpg"
                 >
-                    <source src="/videos/hero-banner.mp4" type="video/mp4" />
+                    <source src="/videos/authe-video.mp4" type="video/mp4" />
                 </video>
                 <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/60" />
             </div>
