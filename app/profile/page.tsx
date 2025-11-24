@@ -46,72 +46,80 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-10">
             <div>
-                <h3 className="text-lg font-medium">{t("Perfil", "Profile")}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-2xl font-bold text-[#0A2540]">{t("Perfil", "Profile")}</h3>
+                <p className="text-gray-500 mt-2">
                     {t(
                         "Actualiza tu información personal.",
                         "Update your personal information."
                     )}
                 </p>
             </div>
-            <Separator />
+
             <form onSubmit={handleSubmit} className="space-y-8">
-                <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                        <Label htmlFor="names">{t("Nombres", "Names")}</Label>
+                <div className="grid gap-x-8 gap-y-6 md:grid-cols-2">
+                    <div className="space-y-3">
+                        <Label htmlFor="names" className="text-base font-medium text-[#0A2540]">{t("Nombres", "Names")}</Label>
                         <Input
                             id="names"
                             name="names"
                             value={formData.names}
                             onChange={handleChange}
                             placeholder="John Doe"
+                            className="h-12 px-4 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="email">{t("Correo Electrónico", "Email")}</Label>
+                    <div className="space-y-3">
+                        <Label htmlFor="email" className="text-base font-medium text-[#0A2540]">{t("Correo Electrónico", "Email")}</Label>
                         <Input
                             id="email"
                             name="email"
                             value={formData.email}
                             disabled
-                            className="bg-muted"
+                            className="h-12 px-4 bg-gray-100 border-gray-200 text-gray-500 cursor-not-allowed"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="country">{t("País / Ciudad", "Country / City")}</Label>
+                    <div className="space-y-3">
+                        <Label htmlFor="country" className="text-base font-medium text-[#0A2540]">{t("País / Ciudad", "Country / City")}</Label>
                         <Input
                             id="country"
                             name="country"
                             value={formData.country}
                             onChange={handleChange}
                             placeholder="Colombia, Bogotá"
+                            className="h-12 px-4 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="phone">{t("Teléfono", "Phone")}</Label>
+                    <div className="space-y-3">
+                        <Label htmlFor="phone" className="text-base font-medium text-[#0A2540]">{t("Teléfono", "Phone")}</Label>
                         <Input
                             id="phone"
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
                             placeholder="+57 300 123 4567"
+                            className="h-12 px-4 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="idNumber">{t("Número de Identificación", "ID Number")}</Label>
+                    <div className="space-y-3">
+                        <Label htmlFor="idNumber" className="text-base font-medium text-[#0A2540]">{t("Número de Identificación", "ID Number")}</Label>
                         <Input
                             id="idNumber"
                             name="idNumber"
                             value={formData.idNumber}
                             onChange={handleChange}
                             placeholder="1234567890"
+                            className="h-12 px-4 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                         />
                     </div>
                 </div>
-                <div className="flex justify-end">
-                    <Button type="submit" className="bg-[#00C2A8] hover:bg-[#00A08A] text-white">
+
+                <div className="flex justify-end pt-4">
+                    <Button
+                        type="submit"
+                        className="h-12 px-8 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-semibold text-lg shadow-md hover:shadow-lg transition-all"
+                    >
                         {t("Guardar Cambios", "Save Changes")}
                     </Button>
                 </div>

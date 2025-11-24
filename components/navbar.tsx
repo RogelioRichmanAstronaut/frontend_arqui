@@ -90,18 +90,22 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="hidden md:flex">
-                    <User className="h-5 w-5 text-[#0A2540]" />
+                    <User className={`h-5 w-5 ${pathname.startsWith('/profile') ? 'text-[#00C2A8]' : 'text-[#0A2540]'}`} />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    {locale === "es" ? "Perfil" : "Profile"}
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className={pathname === '/profile' ? 'text-[#00C2A8] font-medium' : ''}>
+                      {locale === "es" ? "Perfil" : "Profile"}
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    {locale === "es" ? "Reservas" : "Bookings"}
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile/bookings" className={pathname === '/profile/bookings' ? 'text-[#00C2A8] font-medium' : ''}>
+                      {locale === "es" ? "Reservas" : "Bookings"}
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600">
+                  <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     {locale === "es" ? "Cerrar sesión" : "Sign out"}
                   </DropdownMenuItem>
@@ -153,10 +157,24 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
                   <div className="border-t pt-4">
                     {isAuthenticated ? (
                       <div className="flex flex-col gap-2">
-                        <Button variant="ghost" className="w-full justify-start gap-2">
-                          <User className="h-4 w-4" />
-                          {locale === "es" ? "Perfil" : "Profile"}
-                        </Button>
+                        <Link href="/profile" onClick={() => setIsOpen(false)}>
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-start gap-2 ${pathname === '/profile' ? 'text-[#00C2A8] bg-[#00C2A8]/10' : ''}`}
+                          >
+                            <User className="h-4 w-4" />
+                            {locale === "es" ? "Perfil" : "Profile"}
+                          </Button>
+                        </Link>
+                        <Link href="/profile/bookings" onClick={() => setIsOpen(false)}>
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-start gap-2 ${pathname === '/profile/bookings' ? 'text-[#00C2A8] bg-[#00C2A8]/10' : ''}`}
+                          >
+                            <User className="h-4 w-4" />
+                            {locale === "es" ? "Reservas" : "Bookings"}
+                          </Button>
+                        </Link>
                         <Button
                           variant="ghost"
                           className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
