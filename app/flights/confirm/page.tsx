@@ -12,6 +12,9 @@ import { usePackageReservationStore } from "@/lib/package-reservation-store";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { useNotificationsStore } from "@/lib/notifications-store";
 import { usePaymentStore } from "@/lib/payment-store";
+import { useAuthStore } from "@/lib/auth-store";
+// import { useAddCartItem } from "@/lib/hooks/useCart"; // Deshabilitado: servicios externos
+// import { useCheckoutQuote } from "@/lib/hooks/useCheckout"; // Deshabilitado: servicios externos
 import { v4 as uuidv4 } from 'uuid';
 import { useLanguageStore } from "@/lib/store";
 import type { Flight, FlightClass } from "@/components/(flights)/flight-card";
@@ -86,7 +89,14 @@ export default function FlightsConfirmPage() {
   const { addFlightBooking } = useBookingsStore();
   const { addNotification } = useNotificationsStore();
   const { setPaymentInfo } = usePaymentStore();
+  const { clientId } = useAuthStore();
+  // const addCartItem = useAddCartItem(); // Deshabilitado: servicios externos
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Use checkout quote if available to get real total
+  // const checkoutQuoteDto = clientId ? { clientId } : undefined;
+  // const { data: quoteData } = useCheckoutQuote(checkoutQuoteDto); // Deshabilitado: servicios externos
 
   useEffect(() => {
     if (!flight && !hasRedirected.current && !isConfirming.current) {
@@ -137,80 +147,95 @@ export default function FlightsConfirmPage() {
       return;
     }
 
-    if (!flight || !searchDetails) return;
-
-    // Calculate flight total
-    const flightTotal = selectedClasses.reduce((acc, cls) => acc + cls.price, 0);
-
-    // Calculate package total if package reservation exists
-    let packageTotal = 0;
-    let packageDescription = "";
-    
-    if (packageHotel && packageSearchDetails && packageRooms.length > 0) {
-      const roomsRequested = packageSearchDetails.rooms || 1;
-      const availableRooms = packageHotel.habitaciones
-        .filter((room) => room.disponibilidad === "DISPONIBLE")
-        .sort((a, b) => a.precio - b.precio);
-
-      let pricePerNight = 0;
-      if (roomsRequested <= packageRooms.length) {
-        pricePerNight = packageRooms
-          .slice(0, roomsRequested)
-          .reduce((acc, room) => acc + room.precio, 0);
-      } else {
-        const selectedRoomsPrice = packageRooms.reduce((acc, room) => acc + room.precio, 0);
-        const extraRoomsNeeded = roomsRequested - packageRooms.length;
-        const selectedRoomIds = new Set(packageRooms.map((room) => room.habitacion_id));
-        const cheapestAvailableRooms = availableRooms
-          .filter((room) => !selectedRoomIds.has(room.habitacion_id))
-          .slice(0, extraRoomsNeeded);
-        const extraRoomsPrice = cheapestAvailableRooms.reduce((acc, room) => acc + room.precio, 0);
-        pricePerNight = selectedRoomsPrice + extraRoomsPrice;
-      }
-
-      const nights = calculateNights(packageSearchDetails.checkIn, packageSearchDetails.checkOut);
-      packageTotal = pricePerNight * nights;
-      packageDescription = `Paquete ${packageHotel.nombre} #${packageHotel.hotel_id}`;
+    if (!flight || !searchDetails || !clientId) {
+      setValidationError(t("Debes iniciar sesión para continuar", "You must log in to continue"));
+      return;
     }
 
-    // Calculate total amount (package + flight)
-    const totalAmount = packageTotal + flightTotal;
-
-    // Build description
-    const descriptions = [];
-    if (packageDescription) descriptions.push(packageDescription);
-    descriptions.push(`Vuelo ${flight.airline} #${flight.flightId}`);
-    const description = descriptions.join(" + ");
-
-    // Set payment information for bank page with total amount
-    setPaymentInfo({
-      paymentType: packageHotel ? "package" : "flight", // Use package type if both exist
-      totalAmount: totalAmount,
-      description: description,
-    });
-
-    // Save flight booking (will be updated to 'confirmed' after payment)
-    addFlightBooking({
-      id: uuidv4(),
-      date: new Date().toISOString(),
-      flight: flight,
-      selectedClasses: selectedClasses,
-      origin: searchDetails.origin,
-      destination: searchDetails.destination,
-      departureDate: searchDetails.departureDate || new Date().toISOString(),
-      returnDate: searchDetails.returnDate,
-      passengers: searchDetails.passengers,
-      totalPrice: flightTotal,
-      status: 'pending'
-    });
-
-    isConfirming.current = true;
+    setIsProcessing(true);
 
     try {
+      // Calculate flight total
+      const flightTotal = selectedClasses.reduce((acc, cls) => acc + cls.price, 0);
+
+      // TODO: Integración futura con backend de carrito cuando los servicios externos estén listos
+      console.log('✈️ Guardando vuelo localmente (servicios externos pendientes):', {
+        flightId: flight.flightId,
+        origin: searchDetails.origin,
+        destination: searchDetails.destination,
+        totalPrice: flightTotal
+      });
+
+      // Calculate package total if package reservation exists
+      let packageTotal = 0;
+      let packageDescription = "";
+      
+      if (packageHotel && packageSearchDetails && packageRooms.length > 0) {
+        const roomsRequested = packageSearchDetails.rooms || 1;
+        const availableRooms = packageHotel.habitaciones
+          .filter((room) => room.disponibilidad === "DISPONIBLE")
+          .sort((a, b) => a.precio - b.precio);
+
+        let pricePerNight = 0;
+        if (roomsRequested <= packageRooms.length) {
+          pricePerNight = packageRooms
+            .slice(0, roomsRequested)
+            .reduce((acc, room) => acc + room.precio, 0);
+        } else {
+          const selectedRoomsPrice = packageRooms.reduce((acc, room) => acc + room.precio, 0);
+          const extraRoomsNeeded = roomsRequested - packageRooms.length;
+          const selectedRoomIds = new Set(packageRooms.map((room) => room.habitacion_id));
+          const cheapestAvailableRooms = availableRooms
+            .filter((room) => !selectedRoomIds.has(room.habitacion_id))
+            .slice(0, extraRoomsNeeded);
+          const extraRoomsPrice = cheapestAvailableRooms.reduce((acc, room) => acc + room.precio, 0);
+          pricePerNight = selectedRoomsPrice + extraRoomsPrice;
+        }
+
+        const nights = calculateNights(packageSearchDetails.checkIn, packageSearchDetails.checkOut);
+        packageTotal = pricePerNight * nights;
+        packageDescription = `Paquete ${packageHotel.nombre} #${packageHotel.hotel_id}`;
+      }
+
+      // Use quote total if available, otherwise calculate
+      const totalAmount = quoteData?.total || (packageTotal + flightTotal);
+
+      // Build description
+      const descriptions = [];
+      if (packageDescription) descriptions.push(packageDescription);
+      descriptions.push(`Vuelo ${flight.airline} #${flight.flightId}`);
+      const description = descriptions.join(" + ");
+
+      // Set payment information for bank page with total amount
+      setPaymentInfo({
+        paymentType: packageHotel ? "package" : "flight",
+        totalAmount: totalAmount,
+        description: description,
+      });
+
+      // Save flight booking locally (will be updated to 'confirmed' after payment)
+      addFlightBooking({
+        id: uuidv4(),
+        date: new Date().toISOString(),
+        flight: flight,
+        selectedClasses: selectedClasses,
+        origin: searchDetails.origin,
+        destination: searchDetails.destination,
+        departureDate: searchDetails.departureDate || new Date().toISOString(),
+        returnDate: searchDetails.returnDate,
+        passengers: searchDetails.passengers,
+        totalPrice: flightTotal,
+        status: 'pending'
+      });
+
+      isConfirming.current = true;
+
       // Redirect to bank payment page
       await router.replace("/bank");
-    } catch (e) {
-      // ...
+    } catch (error) {
+      console.error('Error en confirmación:', error);
+      setValidationError(t("Error al procesar. Intenta nuevamente.", "Error processing. Please try again."));
+      setIsProcessing(false);
     }
   };
 
@@ -460,8 +485,9 @@ export default function FlightsConfirmPage() {
           <Button
             className="flex-1 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white"
             onClick={handleConfirm}
+            disabled={isProcessing}
           >
-            {t("Confirmar datos", "Confirm data")}
+            {isProcessing ? t("Procesando...", "Processing...") : t("Confirmar datos", "Confirm data")}
           </Button>
         </div>
       </div>

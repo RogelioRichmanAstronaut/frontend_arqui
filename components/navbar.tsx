@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, User, LogOut } from "lucide-react"
 import { Button } from "@/components/(ui)/button"
 import {
@@ -26,8 +26,14 @@ interface NavbarProps {
 
 export function Navbar({ locale, onLocaleChange }: NavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const { isAuthenticated, logout } = useAuthStore()
+
+  const handleLogout = () => {
+    logout()
+    router.push('/auth')
+  }
 
   const navLinks = [
     { href: "/", label: { es: "Inicio", en: "Home" } },
@@ -105,7 +111,7 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-600 cursor-pointer">
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     {locale === "es" ? "Cerrar sesión" : "Sign out"}
                   </DropdownMenuItem>
@@ -179,7 +185,7 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
                           variant="ghost"
                           className="w-full justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                           onClick={() => {
-                            logout()
+                            handleLogout()
                             setIsOpen(false)
                           }}
                         >

@@ -10,11 +10,18 @@ import { DateRangePicker } from "./calendar";
 import { GuestsRoomsSelector } from "./room-guest-selector";
 import { destinations } from "@/lib/destinations";
 import { allPackages } from "@/lib/data/packages";
+import { useCatalogCities } from "@/lib/hooks/useCatalog";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-export function PackagesSearchBar() {
+const queryClient = new QueryClient();
+
+function SearchBarContent() {
   const router = useRouter();
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
+  
+  // Obtener ciudades del backend
+  const { data: catalogCities, isLoading: loadingCities } = useCatalogCities();
 
   const [activePanel, setActivePanel] = useState<"dates" | "guests" | null>(null);
 
@@ -45,8 +52,15 @@ export function PackagesSearchBar() {
     if (value.length > 0) {
       const term = value.toLowerCase();
 
+      // Combinar ciudades del backend con las hardcodeadas (fallback)
+      const backendCities = catalogCities?.map(city => 
+        city.country ? `${city.name}, ${city.country}` : city.name
+      ) || [];
+      
+      const allDestinations = [...new Set([...backendCities, ...destinations])];
+
       // Filter destinations
-      const dests = destinations.filter((d) =>
+      const dests = allDestinations.filter((d) =>
         d.toLowerCase().includes(term)
       );
 
@@ -107,7 +121,11 @@ export function PackagesSearchBar() {
           <div className="relative flex-1 z-50">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <Input
-              placeholder={t("Destino o Hotel", "Destination or Hotel")}
+              placeholder={
+                loadingCities 
+                  ? t("Cargando destinos...", "Loading destinations...") 
+                  : t("Destino o Hotel", "Destination or Hotel")
+              }
               className="pl-10"
               value={localDestination}
               onChange={(event) => handleDestinationChange(event.target.value)}
@@ -117,9 +135,9 @@ export function PackagesSearchBar() {
                 }
               }}
               onBlur={() => {
-
                 setTimeout(() => setShowSuggestions(false), 200);
               }}
+              disabled={loadingCities}
             />
             {showSuggestions && (filteredDestinations.length > 0 || filteredHotels.length > 0) && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
@@ -193,5 +211,13 @@ export function PackagesSearchBar() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+export function PackagesSearchBar() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SearchBarContent />
+    </QueryClientProvider>
   );
 }

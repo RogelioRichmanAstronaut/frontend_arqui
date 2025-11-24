@@ -10,9 +10,13 @@ import { Label } from "@/components/(ui)/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/(ui)/card";
 import { useLanguageStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useLogin, useRegister } from "@/lib/hooks/useAuth";
+import { toast } from "sonner";
 
+const queryClient = new QueryClient();
 
-export default function AuthPage() {
+function AuthForm() {
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
@@ -20,19 +24,39 @@ export default function AuthPage() {
     const [password, setPassword] = useState("");
 
     const { locale, setLocale } = useLanguageStore();
-    const { login } = useAuthStore();
+    const { login: loginLocal } = useAuthStore();
+    const loginMutation = useLogin();
+    const registerMutation = useRegister();
 
     const t = (es: string, en: string) => (locale === "es" ? es : en);
 
     const toggleMode = () => setIsLogin(!isLogin);
 
-    const handleAuth = () => {
-
+    const handleAuth = async () => {
         if (!email || !password) {
+            toast.error(t("Por favor completa todos los campos", "Please fill all fields"));
             return;
         }
-        login(email);
-        router.push("/profile/complete");
+
+        try {
+            if (isLogin) {
+                const result = await loginMutation.mutateAsync({ email, password });
+                loginLocal(email);
+                toast.success(t("Sesión iniciada", "Logged in successfully"));
+                router.push("/profile");
+            } else {
+                await registerMutation.mutateAsync({ 
+                    email, 
+                    password, 
+                    name: email.split('@')[0],
+                    role: 'EMPLOYEE'
+                });
+                toast.success(t("Cuenta creada exitosamente", "Account created successfully"));
+                setIsLogin(true);
+            }
+        } catch (error: any) {
+            toast.error(error?.message || t("Error en la autenticación", "Authentication error"));
+        }
     };
 
     return (
@@ -177,8 +201,11 @@ export default function AuthPage() {
                             <Button
                                 className="w-full h-12 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all"
                                 onClick={handleAuth}
+                                disabled={loginMutation.isPending || registerMutation.isPending}
                             >
-                                {isLogin ? t("Ingresar", "Sign In") : t("Registrarse", "Sign Up")}
+                                {(loginMutation.isPending || registerMutation.isPending) 
+                                    ? t("Procesando...", "Processing...") 
+                                    : (isLogin ? t("Ingresar", "Sign In") : t("Registrarse", "Sign Up"))}
                             </Button>
                             <div className="text-center text-sm text-gray-500">
                                 {isLogin ? t("¿No tienes una cuenta?", "Don't have an account?") : t("¿Ya tienes una cuenta?", "Already have an account?")}{" "}
@@ -194,5 +221,13 @@ export default function AuthPage() {
                 </motion.div>
             </div>
         </div>
+    );
+}
+
+export default function AuthPage() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AuthForm />
+        </QueryClientProvider>
     );
 }

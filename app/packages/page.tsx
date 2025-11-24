@@ -21,14 +21,37 @@ import type {
 
 import { usePackageSearchStore } from "@/lib/package-search-store";
 import { allPackages } from "@/lib/data/packages";
-export default function Page() {
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useHotelSearch } from "@/lib/hooks/useHotels";
+import { toast } from "sonner";
+
+const queryClient = new QueryClient();
+
+function PackagesContent() {
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
 
   const destination = usePackageSearchStore((state) => state.destination);
+  const checkIn = usePackageSearchStore((state) => state.checkIn);
+  const checkOut = usePackageSearchStore((state) => state.checkOut);
+  const adults = usePackageSearchStore((state) => state.adults);
   const hotelFilter = usePackageSearchStore((state) => state.hotelFilter);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const isInitialMount = useRef(true);
+  const [shouldSearch, setShouldSearch] = useState(false);
+
+  const { data: apiHotels, isLoading, error } = useHotelSearch({
+    destination: destination || '',
+    checkIn: checkIn || new Date().toISOString().split('T')[0],
+    checkOut: checkOut || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    adults: adults || 2
+  }, shouldSearch && !!destination);
+
+  useEffect(() => {
+    if (destination && checkIn && checkOut) {
+      setShouldSearch(true);
+    }
+  }, [destination, checkIn, checkOut]);
 
 
   useEffect(() => {
@@ -54,7 +77,30 @@ export default function Page() {
       .replace(/[\u0300-\u036f]/g, "");
   };
 
-  const packagesToDisplay = allPackages.filter((pkg) => {
+  // Use API hotels if available, otherwise fallback to mock data
+  const packagesFromApi = apiHotels ? apiHotels.map((hotel): Package => ({
+    hotel: {
+      hotel_id: hotel.hotelId,
+      nombre: hotel.name,
+      ciudad: hotel.city,
+      pais: hotel.country || '',
+      estrellas: hotel.stars || 3,
+      descripcion: hotel.description || '',
+      imagen: hotel.imageUrl || '/images/cards/default-hotel.jpg',
+      servicios: hotel.amenities || []
+    },
+    rooms: (hotel.rooms || []).map((room): RoomType => ({
+      room_id: room.roomId,
+      tipo: room.type,
+      precio: room.pricePerNight,
+      capacidad: room.maxOccupancy,
+      descripcion: room.description || '',
+      incluye_desayuno: room.amenities?.includes('breakfast') || false,
+      servicios: room.amenities || []
+    }))
+  })) : [];
+
+  const packagesToDisplay = (packagesFromApi.length > 0 ? packagesFromApi : allPackages).filter((pkg) => {
     if (hotelFilter) {
       return pkg.hotel?.hotel_id === hotelFilter;
     }
@@ -179,8 +225,18 @@ export default function Page() {
             />
           </aside>
 
-          <div className="flex-1">
-            {filteredPackages.length === 0 ? (
+          <div className="space-y-8">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00C2A8] mx-auto"></div>
+                <p className="mt-4 text-gray-600">{t("Buscando hoteles disponibles...", "Searching available hotels...")}</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-12">
+                <p className="text-red-600">{t("Error al buscar hoteles", "Error searching hotels")}</p>
+                <p className="text-sm text-gray-500 mt-2">{error.message}</p>
+              </div>
+            ) : filteredPackages.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">
                   {t(
@@ -251,5 +307,13 @@ export default function Page() {
         />
       )}
     </div>
+  );
+}
+
+export default function PackagesPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PackagesContent />
+    </QueryClientProvider>
   );
 }

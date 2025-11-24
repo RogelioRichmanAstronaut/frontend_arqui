@@ -14,6 +14,13 @@ import { DateRangePicker } from "@/components/(packages)/calendar"
 import { FlightCard, type Flight, type FlightClass } from "@/components/(flights)/flight-card"
 import { FlightDetailsModal } from "@/components/(flights)/flight-modal"
 import { BannerSection } from "@/components/banner-section"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useFlightSearch } from "@/lib/hooks/useFlights"
+import { toast } from "sonner"
+
+const queryClient = new QueryClient()
+
+function FlightSearchContent() {
 
 export default function FlightsPage() {
   const { locale } = useLanguageStore()
@@ -43,6 +50,18 @@ export default function FlightsPage() {
   const [activePanel, setActivePanel] = useState<"dates" | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null)
+  const [shouldSearch, setShouldSearch] = useState(false)
+
+  const { data: apiFlights, isLoading, error } = useFlightSearch({
+    origin: origin || 'BOG',
+    destination: destination || 'MDE',
+    departureDate: departureDate || new Date().toISOString().split('T')[0],
+    returnDate: returnDate,
+    adults: passengers || 1,
+    children: 0,
+    infants: 0,
+    classType: classType as 'ECONOMY' | 'BUSINESS' | 'FIRST' || 'ECONOMY'
+  }, shouldSearch)
 
   // Inicializar datos desde la reserva si están disponibles
   useEffect(() => {
@@ -266,9 +285,19 @@ export default function FlightsPage() {
                   onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
                 />
               </div>
-              <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12">
+              <Button 
+                className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12"
+                onClick={() => {
+                  if (!origin || !destination) {
+                    toast.error(t("Por favor completa origen y destino", "Please fill origin and destination"))
+                    return
+                  }
+                  setShouldSearch(true)
+                }}
+                disabled={isLoading}
+              >
                 <Search className="h-5 w-5 mr-2" />
-                {t("Encuentra tu vuelo", "Find your flight")}
+                {isLoading ? t("Buscando...", "Searching...") : t("Encuentra tu vuelo", "Find your flight")}
               </Button>
             </div>
           </CardContent>
@@ -276,8 +305,25 @@ export default function FlightsPage() {
       </section>
 
       <section className="container mx-auto px-4 lg:px-8 py-12">
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00C2A8] mx-auto"></div>
+            <p className="mt-4 text-gray-600">{t("Buscando vuelos disponibles...", "Searching available flights...")}</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-red-600">{t("Error al buscar vuelos", "Error searching flights")}</p>
+            <p className="text-sm text-gray-500 mt-2">{error.message}</p>
+          </div>
+        )}
+        {!isLoading && !error && (!apiFlights || apiFlights.length === 0) && shouldSearch && (
+          <div className="text-center py-12">
+            <p className="text-gray-600">{t("No se encontraron vuelos", "No flights found")}</p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {flights.map((flight, index) => (
+          {(apiFlights && apiFlights.length > 0 ? apiFlights : flights).map((flight, index) => (
             <motion.div
               key={flight.flightId}
               initial={{ opacity: 0, y: 20 }}
@@ -301,5 +347,13 @@ export default function FlightsPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function FlightsPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <FlightSearchContent />
+    </QueryClientProvider>
   )
 }

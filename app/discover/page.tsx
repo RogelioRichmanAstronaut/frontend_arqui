@@ -5,12 +5,20 @@ import { Button } from "@/components/(ui)/button"
 import { Card, CardContent } from "@/components/(ui)/card"
 import { useLanguageStore } from "@/lib/store"
 import { BannerSection } from "@/components/banner-section"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useCatalogCities } from "@/lib/hooks/useCatalog"
 
-export default function DiscoverPage() {
+const queryClient = new QueryClient();
+
+function DiscoverContent() {
   const { locale } = useLanguageStore()
   const t = (es: string, en: string) => (locale === "es" ? es : en)
+  
+  // Obtener ciudades del backend
+  const { data: catalogCities, isLoading: loadingCities } = useCatalogCities();
 
-  const destinations = [
+  // Destinos hardcodeados como fallback
+  const hardcodedDestinations = [
     {
       title: {
         es: "Cartagena de Indias - La Heroica del Caribe",
@@ -71,7 +79,26 @@ export default function DiscoverPage() {
       },
       image: "/images/destinations/tayrona.jpg",
     },
-  ]
+  ];
+
+  // Combinar ciudades del backend con las hardcodeadas
+  const backendDestinations = catalogCities?.map(city => ({
+    title: {
+      es: `${city.name}${city.country ? ` - ${city.country}` : ''}`,
+      en: `${city.name}${city.country ? ` - ${city.country}` : ''}`
+    },
+    location: {
+      es: city.country ? `${city.name}, ${city.country}` : city.name,
+      en: city.country ? `${city.name}, ${city.country}` : city.name
+    },
+    description: {
+      es: `Descubre ${city.name}, un destino único con experiencias inolvidables.`,
+      en: `Discover ${city.name}, a unique destination with unforgettable experiences.`
+    },
+    image: "/images/destinations/default.jpg", // imagen por defecto
+  })) || [];
+
+  const destinations = backendDestinations.length > 0 ? backendDestinations : hardcodedDestinations;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -152,7 +179,22 @@ export default function DiscoverPage() {
             </motion.div>
           ))}
         </div>
+        
+        {loadingCities && (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#00C2A8]"></div>
+            <p className="mt-2 text-sm text-gray-600">{t("Cargando destinos...", "Loading destinations...")}</p>
+          </div>
+        )}
       </section>
     </div>
   )
+}
+
+export default function DiscoverPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <DiscoverContent />
+    </QueryClientProvider>
+  );
 }
