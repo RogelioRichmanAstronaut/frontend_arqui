@@ -12,7 +12,7 @@ export function Footer({ locale }: FooterProps) {
 
   return (
     <footer className="bg-[#F7F9FC] border-t border-gray-200">
-      <div className="container mx-auto px-4 lg:px-8 py-12">
+      <div className="container mx-auto px-4 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <h3 className="font-bold text-[#0A2540] text-lg mb-4">Trip-In</h3>
@@ -80,10 +80,10 @@ export function Footer({ locale }: FooterProps) {
                 </a>
               </li>
             </ul>
-          </div>          
+          </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-300 text-center text-sm text-gray-600">
+        <div className="mt-6 pt-6 border-t border-gray-300 text-center text-sm text-gray-600">
           © 2025 Trip-In. {t("Todos los derechos reservados", "All rights reserved")}.
         </div>
       </div>
