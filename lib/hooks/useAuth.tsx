@@ -9,15 +9,27 @@ import { useAuthStore } from '../auth-store';
 export function useLogin() {
   const qc = useQueryClient();
   const { setToken } = useAuth();
-  const { setClientId } = useAuthStore();
+  const { login: loginStore, setClientId } = useAuthStore();
 
   return useMutation<LoginResponse, Error, LoginDto, unknown>({
     mutationFn: (dto: LoginDto) => auth.login(dto),
-    onSuccess: (data: LoginResponse) => {
+    onSuccess: (data: LoginResponse, variables: LoginDto) => {
       // CSR: store token in memory via AuthProvider
       const token = data?.token || data?.access_token;
       if (token) {
         setToken(token);
+      }
+      
+      // Guardar datos del usuario en el store para persistencia
+      if (data?.user) {
+        loginStore(variables.email);
+        // Si el backend devuelve más datos del usuario, actualizarlos
+        if (data.user.name || data.user.email) {
+          // Los datos adicionales se cargarán desde el perfil
+        }
+      } else {
+        // Si no hay datos del usuario en la respuesta, al menos guardar el email
+        loginStore(variables.email);
       }
       
       // If backend returns user data with clientId, store it in both localStorage and store

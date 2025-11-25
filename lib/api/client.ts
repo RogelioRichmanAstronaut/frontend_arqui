@@ -13,8 +13,17 @@ export type ApiClientOptions = {
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? process.env.BACKEND_URL ?? 'http://localhost:3000/v1';
 
 function buildUrl(path: string) {
+  // If path is already a full URL, return it as is
   if (path.startsWith('http')) return path;
-  return `${BASE.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
+  
+  // Normalize BASE: remove trailing slashes
+  const base = BASE.replace(/\/+$/, '');
+  
+  // Normalize path: ensure it starts with /
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  
+  // Combine base and path
+  return `${base}${normalizedPath}`;
 }
 
 export async function apiClient<T = any>(path: string, opts: ApiClientOptions = {}): Promise<T> {

@@ -21,8 +21,7 @@ import { toast } from "sonner"
 const queryClient = new QueryClient()
 
 function FlightSearchContent() {
-
-export default function FlightsPage() {
+ 
   const { locale } = useLanguageStore()
   const t = (es: string, en: string) => (locale === "es" ? es : en)
   
@@ -56,12 +55,12 @@ export default function FlightsPage() {
     origin: origin || 'BOG',
     destination: destination || 'MDE',
     departureDate: departureDate || new Date().toISOString().split('T')[0],
-    returnDate: returnDate,
+    returnDate: returnDate ?? undefined,
     adults: passengers || 1,
     children: 0,
     infants: 0,
     classType: classType as 'ECONOMY' | 'BUSINESS' | 'FIRST' || 'ECONOMY'
-  }, shouldSearch)
+  } as any, shouldSearch)
 
   // Inicializar datos desde la reserva si están disponibles
   useEffect(() => {

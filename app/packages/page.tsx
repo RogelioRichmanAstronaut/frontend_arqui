@@ -78,29 +78,56 @@ function PackagesContent() {
   };
 
   // Use API hotels if available, otherwise fallback to mock data
-  const packagesFromApi = apiHotels ? apiHotels.map((hotel): Package => ({
-    hotel: {
-      hotel_id: hotel.hotelId,
-      nombre: hotel.name,
-      ciudad: hotel.city,
-      pais: hotel.country || '',
-      estrellas: hotel.stars || 3,
-      descripcion: hotel.description || '',
-      imagen: hotel.imageUrl || '/images/cards/default-hotel.jpg',
-      servicios: hotel.amenities || []
-    },
-    rooms: (hotel.rooms || []).map((room): RoomType => ({
-      room_id: room.roomId,
-      tipo: room.type,
-      precio: room.pricePerNight,
-      capacidad: room.maxOccupancy,
-      descripcion: room.description || '',
-      incluye_desayuno: room.amenities?.includes('breakfast') || false,
-      servicios: room.amenities || []
-    }))
-  })) : [];
+  const packagesFromApi = apiHotels ? apiHotels.map((hotel): Package => {
+    // Get first image from images array or use default
+    const firstImage = hotel.images && hotel.images.length > 0 
+      ? hotel.images[0] 
+      : '/images/cards/default-hotel.jpg';
+    
+    // Calculate price from rooms
+    const minPrice = hotel.rooms && hotel.rooms.length > 0
+      ? Math.min(...hotel.rooms.map(r => r.price || 0))
+      : 0;
+    
+    return {
+      hotel: {
+        hotel_id: hotel.hotelId,
+        nombre: hotel.name,
+        ciudad: hotel.city,
+        pais: hotel.country || '',
+        categoria_estrellas: hotel.stars || 3,
+        direccion: '',
+        servicios_hotel: hotel.amenities || [],
+        fotos: hotel.images && hotel.images.length > 0 ? hotel.images : [firstImage],
+        habitaciones: (hotel.rooms || []).map((room): RoomType => ({
+          habitacion_id: room.roomId,
+          tipo: room.type,
+          disponibilidad: room.available ? 'DISPONIBLE' : 'NO_DISPONIBLE',
+          codigo_tipo_habitacion: room.roomId,
+          precio: room.price || 0,
+          servicios_habitacion: []
+        }))
+      },
+      title: hotel.name,
+      stars: hotel.stars || 3,
+      includes: hotel.amenities?.slice(0, 3).join(', ') || 'Servicios incluidos',
+      price: minPrice,
+      displayPrice: minPrice > 0 ? `$${minPrice.toLocaleString('es-CO')} COP` : 'Consultar precio',
+      airline: 'Aerolínea asociada',
+      hasBreakfast: hotel.rooms?.some(r => r.includesBreakfast) || false,
+      imageUrl: firstImage
+    };
+  }) : [];
 
-  const packagesToDisplay = (packagesFromApi.length > 0 ? packagesFromApi : allPackages).filter((pkg) => {
+  // Add imageUrl to mock packages if not present
+  const packagesWithImages = packagesFromApi.length > 0 
+    ? packagesFromApi 
+    : allPackages.map(pkg => ({
+        ...pkg,
+        imageUrl: pkg.imageUrl || pkg.hotel?.fotos?.[0] || '/images/cards/default-hotel.jpg'
+      }));
+
+  const packagesToDisplay = packagesWithImages.filter((pkg) => {
     if (hotelFilter) {
       return pkg.hotel?.hotel_id === hotelFilter;
     }
@@ -260,6 +287,7 @@ function PackagesContent() {
                       includes={pkg.includes}
                       displayPrice={pkg.displayPrice}
                       airline={pkg.airline}
+                      imageUrl={pkg.imageUrl || pkg.hotel?.fotos?.[0]}
                       index={index}
                       onSelect={() => pkg.hotel && setSelectedHotel(pkg.hotel)}
                     />
