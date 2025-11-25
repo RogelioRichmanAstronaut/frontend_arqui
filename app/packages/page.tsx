@@ -77,8 +77,8 @@ function PackagesContent() {
       .replace(/[\u0300-\u036f]/g, "");
   };
 
-  // Use API hotels if available, otherwise fallback to mock data
-  const packagesFromApi = apiHotels ? apiHotels.map((hotel): Package => {
+  // Use API hotels if available, otherwise fallback to mock data only if no search has been performed
+  const packagesFromApi = (apiHotels && apiHotels.length > 0) ? apiHotels.map((hotel): Package => {
     // Get first image from images array or use default
     const firstImage = hotel.images && hotel.images.length > 0 
       ? hotel.images[0] 
@@ -120,12 +120,13 @@ function PackagesContent() {
   }) : [];
 
   // Add imageUrl to mock packages if not present
+  // Solo usar mocks si no hay datos de API y no se ha realizado una búsqueda
   const packagesWithImages = packagesFromApi.length > 0 
     ? packagesFromApi 
-    : allPackages.map(pkg => ({
+    : (!shouldSearch ? allPackages.map(pkg => ({
         ...pkg,
         imageUrl: pkg.imageUrl || pkg.hotel?.fotos?.[0] || '/images/cards/default-hotel.jpg'
-      }));
+      })) : []);
 
   const packagesToDisplay = packagesWithImages.filter((pkg) => {
     if (hotelFilter) {

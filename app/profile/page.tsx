@@ -9,13 +9,14 @@ import { Input } from "@/components/(ui)/input";
 import { Label } from "@/components/(ui)/label";
 import { Separator } from "@/components/(ui)/separator";
 import { toast } from "sonner";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useMyClient, useUpdateClient } from "@/lib/hooks/useProfile";
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { useMyClient, useUpdateMyClient } from "@/lib/hooks/useProfile";
 
 const queryClient = new QueryClient();
 
 function ProfileContent() {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const { user, updateUser: updateLocal, hasCompleteProfile, setClientId } = useAuthStore();
     const { locale } = useLanguageStore();
     const t = (es: string, en: string) => (locale === "es" ? es : en);
@@ -47,7 +48,8 @@ function ProfileContent() {
         }
     }, [user, hasCompleteProfile, router, loadingClient, clientData]);
 
-    const updateClientMutation = useUpdateClient(clientData?.clientId || '');
+    // Usar el nuevo hook que actualiza el cliente autenticado directamente
+    const updateClientMutation = useUpdateMyClient();
 
     const [formData, setFormData] = useState({
         names: "",
@@ -63,7 +65,7 @@ function ProfileContent() {
                 names: clientData.name || "",
                 email: clientData.email || "",
                 country: clientData.address || "",
-                phone: clientData.phoneNumber || "",
+                phone: clientData.phone || "", // Usar 'phone' en lugar de 'phoneNumber'
                 idNumber: clientData.clientId || "",
             });
         } else if (user) {
@@ -85,16 +87,16 @@ function ProfileContent() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (clientData?.clientId) {
-                await updateClientMutation.mutateAsync({
-                    name: formData.names,
-                    email: formData.email,
-                    phone: formData.phone,
-                });
-            }
+            // Actualizar usando el endpoint /clients/me que no requiere ID
+            await updateClientMutation.mutateAsync({
+                name: formData.names,
+                email: formData.email,
+                phone: formData.phone,
+            });
             updateLocal(formData);
             toast.success(t("Perfil actualizado correctamente", "Profile updated successfully"));
         } catch (error: any) {
+            console.error('Error al actualizar perfil:', error);
             toast.error(error?.message || t("Error al actualizar perfil", "Error updating profile"));
         }
     };

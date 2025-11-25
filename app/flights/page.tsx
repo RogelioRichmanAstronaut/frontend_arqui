@@ -93,7 +93,8 @@ function FlightSearchContent() {
     }
   }, [packageCheckIn, packageCheckOut, departureDate, returnDate, setDepartureDate, setReturnDate])
 
-  const flights: Flight[] = [
+  // Mock flights - solo se usan como fallback cuando no hay datos de la API y no se ha realizado búsqueda
+  const mockFlights: Flight[] = [
     {
       flightId: "FL-001",
       airline: "LATAM Airlines",
@@ -234,6 +235,11 @@ function FlightSearchContent() {
     },
   ]
 
+  // Determinar qué vuelos mostrar: priorizar datos de API, usar mocks solo si no hay búsqueda activa
+  const flightsToDisplay = (apiFlights && apiFlights.length > 0) 
+    ? apiFlights 
+    : (!shouldSearch ? mockFlights : [])
+
   const handleFlightSelect = (flight: Flight, selectedClass?: FlightClass) => {
     // Abrir el modal con los detalles del vuelo
     setSelectedFlight(flight)
@@ -316,13 +322,23 @@ function FlightSearchContent() {
             <p className="text-sm text-gray-500 mt-2">{error.message}</p>
           </div>
         )}
-        {!isLoading && !error && (!apiFlights || apiFlights.length === 0) && shouldSearch && (
+        {!isLoading && !error && shouldSearch && flightsToDisplay.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-600">{t("No se encontraron vuelos", "No flights found")}</p>
+            <p className="text-sm text-gray-500 mt-2">
+              {t("Intenta con otros parámetros de búsqueda", "Try with different search parameters")}
+            </p>
+          </div>
+        )}
+        {!shouldSearch && flightsToDisplay.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500">
+              {t("Ingresa origen, destino y fecha para buscar vuelos", "Enter origin, destination and date to search flights")}
+            </p>
           </div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(apiFlights && apiFlights.length > 0 ? apiFlights : flights).map((flight, index) => (
+          {flightsToDisplay.map((flight, index) => (
             <motion.div
               key={flight.flightId}
               initial={{ opacity: 0, y: 20 }}

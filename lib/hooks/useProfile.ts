@@ -28,7 +28,21 @@ export function useUpdateClient(clientId: string) {
   return useMutation({
     mutationFn: (data: Partial<CreateClientDto>) => clients.update(clientId, data),
     onSuccess: () => {
+      // Invalidar tanto la query del cliente específico como la de 'me'
       queryClient.invalidateQueries({ queryKey: ['clients', clientId] });
+      queryClient.invalidateQueries({ queryKey: ['clients', 'me'] });
+    },
+  });
+}
+
+export function useUpdateMyClient() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: Partial<CreateClientDto>) => clients.updateMe(data),
+    onSuccess: () => {
+      // Invalidar la query de 'me' para refrescar los datos
+      queryClient.invalidateQueries({ queryKey: ['clients', 'me'] });
     },
   });
 }
