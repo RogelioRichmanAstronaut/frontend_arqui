@@ -119,6 +119,9 @@ export default function CompleteProfilePage() {
                     if (createError?.status === 409 || createError?.status === 400) {
                         console.log('🔄 Cliente ya existe, intentando actualizar...');
                         const client = await clients.getMe();
+                        if (!client) {
+                            throw new Error('No se pudo obtener información del cliente');
+                        }
                         const updatedClient = await clients.update(client.id, {
                             name: formData.names,
                             phone: formData.phone,
