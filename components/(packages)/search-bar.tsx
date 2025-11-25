@@ -57,7 +57,8 @@ function SearchBarContent() {
         city.country ? `${city.name}, ${city.country}` : city.name
       ) || [];
       
-      const allDestinations = [...new Set([...backendCities, ...destinations])];
+      // Merge arrays and remove duplicates without using Set spread (avoids downlevelIteration issues)
+      const allDestinations = backendCities.concat(destinations).filter((v, i, a) => a.indexOf(v) === i);
 
       // Filter destinations
       const dests = allDestinations.filter((d) =>
