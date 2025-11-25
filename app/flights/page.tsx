@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { MapPin, Users, Search } from "lucide-react"
 import { Button } from "@/components/(ui)/button"
 import { Input } from "@/components/(ui)/input"
 import { Card, CardContent } from "@/components/(ui)/card"
+import { Alert, AlertDescription } from "@/components/(ui)/alert"
 import { useLanguageStore } from "@/lib/store"
 import { usePackageReservationStore } from "@/lib/package-reservation-store"
 import { useFlightsStore } from "@/lib/flights-store"
@@ -14,6 +15,7 @@ import { DateRangePicker } from "@/components/(packages)/calendar"
 import { FlightCard, type Flight, type FlightClass } from "@/components/(flights)/flight-card"
 import { FlightDetailsModal } from "@/components/(flights)/flight-modal"
 import { BannerSection } from "@/components/banner-section"
+import { originCities } from "@/lib/origin-cities"
 
 export default function FlightsPage() {
   const { locale } = useLanguageStore()
@@ -43,6 +45,10 @@ export default function FlightsPage() {
   const [activePanel, setActivePanel] = useState<"dates" | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null)
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false)
+  const [filteredOrigins, setFilteredOrigins] = useState<string[]>([])
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const originInputRef = useRef<HTMLDivElement>(null)
 
   // Inicializar datos desde la reserva si están disponibles
   useEffect(() => {
@@ -75,12 +81,38 @@ export default function FlightsPage() {
     }
   }, [packageCheckIn, packageCheckOut, departureDate, returnDate, setDepartureDate, setReturnDate])
 
+  // Extract airport code from origin (format: "BOG - Bogotá" -> "BOG")
+  const getAirportCode = (value: string): string => {
+    if (!value) return ""
+    const parts = value.split(" - ")
+    return parts.length > 0 ? parts[0].trim() : value
+  }
+
+  // Validate that origin and destination are different
+  const validateOriginDestination = () => {
+    const originCode = getAirportCode(origin)
+    const destinationCode = getAirportCode(destination)
+
+    if (originCode && destinationCode && originCode === destinationCode) {
+      setValidationError(
+        t(
+          "El origen y el destino no pueden ser el mismo",
+          "Origin and destination cannot be the same"
+        )
+      )
+      return false
+    }
+
+    setValidationError(null)
+    return true
+  }
+
   const flights: Flight[] = [
     {
       flightId: "FL-001",
       airline: "LATAM Airlines",
-      origin: origin || "BOG",
-      destination: destination || "MDE",
+      origin: getAirportCode(origin) || "BOG",
+      destination: getAirportCode(destination) || "MDE",
       departureTime: "08:00",
       arrivalTime: "09:30",
       duration: "1h 30m",
@@ -102,8 +134,8 @@ export default function FlightsPage() {
     {
       flightId: "FL-002",
       airline: "Avianca",
-      origin: origin || "BOG",
-      destination: destination || "MDE",
+      origin: getAirportCode(origin) || "BOG",
+      destination: getAirportCode(destination) || "MDE",
       departureTime: "12:15",
       arrivalTime: "13:45",
       duration: "1h 30m",
@@ -125,8 +157,8 @@ export default function FlightsPage() {
     {
       flightId: "FL-003",
       airline: "Viva Air",
-      origin: origin || "BOG",
-      destination: destination || "MDE",
+      origin: getAirportCode(origin) || "BOG",
+      destination: getAirportCode(destination) || "MDE",
       departureTime: "16:30",
       arrivalTime: "18:00",
       duration: "1h 30m",
@@ -148,8 +180,8 @@ export default function FlightsPage() {
     {
       flightId: "FL-004",
       airline: "Copa Airlines",
-      origin: origin || "BOG",
-      destination: destination || "MDE",
+      origin: getAirportCode(origin) || "BOG",
+      destination: getAirportCode(destination) || "MDE",
       departureTime: "20:00",
       arrivalTime: "21:30",
       duration: "1h 30m",
@@ -171,8 +203,8 @@ export default function FlightsPage() {
     {
       flightId: "FL-005",
       airline: "LATAM Airlines",
-      origin: origin || "BOG",
-      destination: destination || "MDE",
+      origin: getAirportCode(origin) || "BOG",
+      destination: getAirportCode(destination) || "MDE",
       departureTime: "06:45",
       arrivalTime: "08:15",
       duration: "1h 30m",
@@ -194,8 +226,8 @@ export default function FlightsPage() {
     {
       flightId: "FL-006",
       airline: "Avianca",
-      origin: origin || "BOG",
-      destination: destination || "MDE",
+      origin: getAirportCode(origin) || "BOG",
+      destination: getAirportCode(destination) || "MDE",
       departureTime: "14:20",
       arrivalTime: "15:50",
       duration: "1h 30m",
@@ -221,6 +253,61 @@ export default function FlightsPage() {
     setSelectedFlight(flight)
   }
 
+  const handleOriginChange = (value: string) => {
+    setOrigin(value)
+
+    if (value.length > 0) {
+      const term = value.toLowerCase()
+      const filtered = originCities.filter((city) =>
+        city.toLowerCase().includes(term)
+      )
+      setFilteredOrigins(filtered)
+      setShowOriginSuggestions(true)
+    } else {
+      setShowOriginSuggestions(false)
+    }
+
+    // Validate after a short delay to allow selection
+    setTimeout(() => {
+      validateOriginDestination()
+    }, 100)
+  }
+
+  const handleSelectOrigin = (city: string) => {
+    // Store the full city name for display, but extract code for flight data
+    setOrigin(city)
+    setShowOriginSuggestions(false)
+    // Validate after selection
+    setTimeout(() => {
+      validateOriginDestination()
+    }, 100)
+  }
+
+  const handleDestinationChange = (value: string) => {
+    setDestination(value)
+    // Validate after a short delay
+    setTimeout(() => {
+      validateOriginDestination()
+    }, 100)
+  }
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        originInputRef.current &&
+        !originInputRef.current.contains(event.target as Node)
+      ) {
+        setShowOriginSuggestions(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-gray-50">
       <BannerSection imageUrl="/images/banner/flight-banner.jpg">
@@ -233,14 +320,42 @@ export default function FlightsPage() {
         <Card className="shadow-2xl">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <div className="relative z-50" ref={originInputRef}>
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
                 <Input 
                   placeholder={t("Origen", "Origin")} 
                   className="pl-10 h-12"
                   value={origin}
-                  onChange={(e) => setOrigin(e.target.value)}
+                  onChange={(e) => handleOriginChange(e.target.value)}
+                  onFocus={() => {
+                    if (origin) {
+                      handleOriginChange(origin)
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay to allow click on suggestion
+                    setTimeout(() => setShowOriginSuggestions(false), 200)
+                  }}
                 />
+                {showOriginSuggestions && filteredOrigins.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase bg-gray-50">
+                        {t("Orígenes", "Origins")}
+                      </div>
+                      {filteredOrigins.map((city, index) => (
+                        <div
+                          key={`origin-${index}`}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 flex items-center gap-2"
+                          onClick={() => handleSelectOrigin(city)}
+                        >
+                          <MapPin className="h-4 w-4 text-gray-400" />
+                          {city}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -248,7 +363,7 @@ export default function FlightsPage() {
                   placeholder={t("Destino", "Destination")} 
                   className="pl-10 h-12"
                   value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                  onChange={(e) => handleDestinationChange(e.target.value)}
                 />
               </div>
               <DateRangePicker
@@ -266,11 +381,27 @@ export default function FlightsPage() {
                   onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
                 />
               </div>
-              <Button className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12">
+              <Button 
+                className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!!validationError}
+                onClick={() => {
+                  if (!validateOriginDestination()) {
+                    return
+                  }
+                  // Search functionality can be added here
+                }}
+              >
                 <Search className="h-5 w-5 mr-2" />
                 {t("Encuentra tu vuelo", "Find your flight")}
               </Button>
             </div>
+            {validationError && (
+              <div className="mt-4">
+                <Alert variant="destructive">
+                  <AlertDescription>{validationError}</AlertDescription>
+                </Alert>
+              </div>
+            )}
           </CardContent>
         </Card>
       </section>
