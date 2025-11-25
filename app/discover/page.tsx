@@ -32,7 +32,7 @@ function DiscoverContent() {
         es: "Descubre la magia de Cartagena, una ciudad colonial llena de historia, playas paradisíacas y una rica cultura caribeña. Explora sus murallas, disfruta de su gastronomía única y relájate en sus hermosas playas.",
         en: "Discover the magic of Cartagena, a colonial city full of history, paradisiacal beaches and a rich Caribbean culture. Explore its walls, enjoy its unique gastronomy and relax on its beautiful beaches."
       },
-      image: "/images/destinations/cartagena.jpg",
+      image: "https://www.viajes.cl/hs-fs/hubfs/Torre%20del%20Reloj%20en%20Cartagena%20de%20Indias%2c%20Colombia.jpg?width=2126&name=Torre%20del%20Reloj%20en%20Cartagena%20de%20Indias%2c%20Colombia.jpg",
     },
     {
       title: {
@@ -47,7 +47,7 @@ function DiscoverContent() {
         es: "Sumérgete en las aguas cristalinas de San Andrés, un paraíso tropical con playas de arena blanca, arrecifes de coral y una cultura isleña única. Perfecto para buceo, snorkel y relajación.",
         en: "Dive into the crystal clear waters of San Andrés, a tropical paradise with white sand beaches, coral reefs and a unique island culture. Perfect for diving, snorkeling and relaxation."
       },
-      image: "/images/destinations/san-andres.jpg",
+      image: "https://media.staticontent.com/media/pictures/ecc404e8-9a99-46b0-a56a-ead992b5166e",
     },
     {
       title: {
@@ -62,7 +62,7 @@ function DiscoverContent() {
         es: "Experimenta la transformación de Medellín, una ciudad innovadora con un clima perfecto, cultura vibrante, arte urbano impresionante y gente amable. Conoce sus barrios, museos y disfruta de su vida nocturna.",
         en: "Experience the transformation of Medellín, an innovative city with perfect weather, vibrant culture, impressive urban art and friendly people. Discover its neighborhoods, museums and enjoy its nightlife."
       },
-      image: "/images/destinations/medellin.jpg",
+      image: "https://gobackpacking.com/wp-content/uploads/2021/09/El-Poblado-Medellin.jpg",
     },
     {
       title: {
@@ -77,7 +77,7 @@ function DiscoverContent() {
         es: "Explora el Parque Nacional Tayrona, un santuario natural donde la selva se encuentra con el mar. Disfruta de playas vírgenes, senderos ecológicos y una biodiversidad única en el mundo.",
         en: "Explore Tayrona National Park, a natural sanctuary where the jungle meets the sea. Enjoy pristine beaches, ecological trails and unique biodiversity in the world."
       },
-      image: "/images/destinations/tayrona.jpg",
+      image: "https://upload.wikimedia.org/wikipedia/commons/7/76/Cabo_San_Juan%2C_Colombia.jpg",
     },
   ];
 
@@ -141,9 +141,7 @@ function DiscoverContent() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-gray-200 rounded-lg overflow-hidden">
-              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400" />
-            </div>
+          
           </motion.div>
         </div>
 
