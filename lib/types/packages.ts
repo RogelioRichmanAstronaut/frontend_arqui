@@ -28,4 +28,5 @@ export interface Package {
   airline: string;
   hasBreakfast: boolean;
   hotel?: Hotel;
+  imageUrl?: string; // Image URL for the package card
 }

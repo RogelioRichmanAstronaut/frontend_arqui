@@ -1,5 +1,6 @@
 import { Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/(ui)/card';
+import Image from 'next/image';
 
 interface PackageCardProps {
   title: string;
@@ -7,6 +8,7 @@ interface PackageCardProps {
   includes: string;
   displayPrice: string;
   airline: string;
+  imageUrl?: string;
   onSelect: () => void;
   index: number;
 }
@@ -17,9 +19,14 @@ export function PackageCard({
   includes,
   displayPrice,
   airline,
+  imageUrl,
   onSelect,
   index,
 }: PackageCardProps) {
+  // Fallback image if no imageUrl is provided
+  const defaultImage = '/images/cards/default-hotel.jpg';
+  const imageSrc = imageUrl || defaultImage;
+
   return (
     <div
       className="h-full animate-fade-in"
@@ -29,7 +36,23 @@ export function PackageCard({
         onClick={onSelect}
         className="overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col cursor-pointer"
       >
-        <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0" />
+        <div className="relative h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0 overflow-hidden">
+          <Image
+            src={imageSrc}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={(e) => {
+              // Fallback to gradient if image fails to load
+              const target = e.target as HTMLImageElement;
+              target.style.display = 'none';
+              if (target.parentElement) {
+                target.parentElement.className = 'relative h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex-shrink-0';
+              }
+            }}
+          />
+        </div>
         <CardContent className="p-6 flex flex-col flex-grow">
           <div className="flex items-center gap-1 mb-2 h-5">
             {Array.from({ length: stars }).map((_, i) => (

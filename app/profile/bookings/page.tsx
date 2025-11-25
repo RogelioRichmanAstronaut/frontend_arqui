@@ -1,15 +1,20 @@
 "use client";
 
 import { useBookingsStore } from "@/lib/bookings-store";
+import { useAuthStore } from "@/lib/auth-store";
+// import { useReservations } from "@/lib/hooks/useReservations"; // Deshabilitado: servicios externos
 import { useLanguageStore } from "@/lib/store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/(ui)/card";
 import { Badge } from "@/components/(ui)/badge";
-import { Calendar, MapPin, Hotel as HotelIcon } from "lucide-react";
+import { Skeleton } from "@/components/(ui)/skeleton";
+import { Calendar, MapPin, Hotel as HotelIcon, DollarSign, Plane, Users } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 export default function BookingsPage() {
-    const { bookings } = useBookingsStore();
+    const { bookings: localBookings, flightBookings: localFlightBookings } = useBookingsStore();
+    const { clientId } = useAuthStore();
+    // const { data: backendReservations, isLoading, error } = useReservations(clientId); // Deshabilitado: servicios externos
     const { locale } = useLanguageStore();
     const t = (esStr: string, enStr: string) => (locale === "es" ? esStr : enStr);
 
@@ -21,83 +26,156 @@ export default function BookingsPage() {
         }
     };
 
+    const getStatusBadge = (status: string) => {
+        const statusMap: Record<string, { variant: "default" | "destructive" | "secondary", label: string }> = {
+            'confirmed': { variant: 'default', label: t("Confirmada", "Confirmed") },
+            'cancelled': { variant: 'destructive', label: t("Cancelada", "Cancelled") },
+            'completed': { variant: 'secondary', label: t("Completada", "Completed") },
+            'pending': { variant: 'secondary', label: t("Pendiente", "Pending") },
+        };
+        return statusMap[status.toLowerCase()] || { variant: 'secondary', label: status };
+    };
+
+    // Por ahora usar solo datos locales (sin backend de reservas - servicio externo)
+    const hasBookings = localBookings.length > 0 || localFlightBookings.length > 0;
+
+    /* Temporalmente deshabilitado - requiere servicios externos
+    if (isLoading) { ... }
+    if (error) { ... }
+    */
+
+    // Mostrar solo reservas locales por ahora
     return (
         <div className="space-y-6">
             <div>
                 <h3 className="text-lg font-medium">{t("Mis Reservas", "My Bookings")}</h3>
                 <p className="text-sm text-muted-foreground">
                     {t(
-                        "Aquí puedes ver el historial de tus reservas.",
-                        "Here you can see your booking history."
+                        "Aquí puedes ver el historial de tus reservas locales.",
+                        "Here you can see your local booking history."
                     )}
                 </p>
             </div>
+            
             <div className="space-y-4">
-                {bookings.length === 0 ? (
+                {!hasBookings ? (
                     <div className="text-center py-10 text-muted-foreground">
                         {t("No tienes reservas aún.", "You don't have any bookings yet.")}
                     </div>
                 ) : (
-                    bookings.map((booking) => (
-                        <Card key={booking.id}>
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="text-xl">{booking.hotel.nombre}</CardTitle>
-                                        <CardDescription className="flex items-center mt-1">
-                                            <MapPin className="h-3 w-3 mr-1" />
-                                            {booking.hotel.ciudad}, {booking.hotel.pais}
-                                        </CardDescription>
+                    <>
+                        {/* Hotel bookings */}
+                        {localBookings.map((booking) => (
+                            <Card key={booking.id}>
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle className="text-xl flex items-center gap-2">
+                                                <HotelIcon className="h-5 w-5 text-[#00C2A8]" />
+                                                {booking.hotel.nombre}
+                                            </CardTitle>
+                                            <CardDescription className="flex items-center mt-1">
+                                                <MapPin className="h-3 w-3 mr-1" />
+                                                {booking.hotel.ciudad}, {booking.hotel.pais}
+                                            </CardDescription>
+                                        </div>
+                                        <Badge
+                                            variant={getStatusBadge(booking.status).variant}
+                                            className={booking.status === "confirmed" ? "bg-[#00C2A8] hover:bg-[#00A08A]" : ""}
+                                        >
+                                            {getStatusBadge(booking.status).label}
+                                        </Badge>
                                     </div>
-                                    <Badge
-                                        variant={
-                                            booking.status === "confirmed"
-                                                ? "default"
-                                                : booking.status === "cancelled"
-                                                    ? "destructive"
-                                                    : "secondary"
-                                        }
-                                        className={booking.status === "confirmed" ? "bg-[#00C2A8] hover:bg-[#00A08A]" : ""}
-                                    >
-                                        {booking.status === "confirmed"
-                                            ? t("Confirmada", "Confirmed")
-                                            : booking.status === "cancelled"
-                                                ? t("Cancelada", "Cancelled")
-                                                : t("Completada", "Completed")}
-                                    </Badge>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="space-y-2">
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <Calendar className="h-4 w-4 mr-2" />
-                                            <span>
-                                                {t("Check-in:", "Check-in:")} {formatDate(booking.checkIn)}
-                                            </span>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <Calendar className="h-4 w-4 mr-2" />
+                                                <span>
+                                                    {t("Check-in:", "Check-in:")} {formatDate(booking.checkIn)}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <Calendar className="h-4 w-4 mr-2" />
+                                                <span>
+                                                    {t("Check-out:", "Check-out:")} {formatDate(booking.checkOut)}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <Calendar className="h-4 w-4 mr-2" />
-                                            <span>
-                                                {t("Check-out:", "Check-out:")} {formatDate(booking.checkOut)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div className="flex items-center text-sm text-muted-foreground">
-                                            <HotelIcon className="h-4 w-4 mr-2" />
-                                            <span>
-                                                {booking.rooms.length} {t("Habitación(es)", "Room(s)")}
-                                            </span>
-                                        </div>
-                                        <div className="font-medium">
-                                            {t("Total:", "Total:")} ${booking.totalPrice.toLocaleString()} COP
+                                        <div className="space-y-2">
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <HotelIcon className="h-4 w-4 mr-2" />
+                                                <span>
+                                                    {booking.rooms.length} {t("Habitación(es)", "Room(s)")}
+                                                </span>
+                                            </div>
+                                            <div className="font-medium">
+                                                {t("Total:", "Total:")} ${booking.totalPrice.toLocaleString()} COP
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
+                                </CardContent>
+                            </Card>
+                        ))}
+                        
+                        {/* Flight bookings */}
+                        {localFlightBookings.map((booking) => (
+                            <Card key={booking.id}>
+                                <CardHeader>
+                                    <div className="flex justify-between items-start">
+                                        <div>
+                                            <CardTitle className="text-xl flex items-center gap-2">
+                                                <Plane className="h-5 w-5 text-[#00C2A8]" />
+                                                {booking.flight.airline}
+                                            </CardTitle>
+                                            <CardDescription className="flex items-center mt-1">
+                                                <MapPin className="h-3 w-3 mr-1" />
+                                                {booking.origin} → {booking.destination}
+                                            </CardDescription>
+                                        </div>
+                                        <Badge
+                                            variant={getStatusBadge(booking.status).variant}
+                                            className={booking.status === "confirmed" ? "bg-[#00C2A8] hover:bg-[#00A08A]" : ""}
+                                        >
+                                            {getStatusBadge(booking.status).label}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <Calendar className="h-4 w-4 mr-2" />
+                                                <span>
+                                                    {t("Salida:", "Departure:")} {formatDate(booking.departureDate)}
+                                                </span>
+                                            </div>
+                                            {booking.returnDate && (
+                                                <div className="flex items-center text-sm text-muted-foreground">
+                                                    <Calendar className="h-4 w-4 mr-2" />
+                                                    <span>
+                                                        {t("Retorno:", "Return:")} {formatDate(booking.returnDate)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center text-sm text-muted-foreground">
+                                                <Users className="h-4 w-4 mr-2" />
+                                                <span>
+                                                    {booking.passengers} {t("Pasajero(s)", "Passenger(s)")}
+                                                </span>
+                                            </div>
+                                            <div className="font-medium">
+                                                {t("Total:", "Total:")} ${booking.totalPrice.toLocaleString()} COP
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </>
                 )}
             </div>
         </div>

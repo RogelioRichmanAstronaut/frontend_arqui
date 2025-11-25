@@ -10,29 +10,92 @@ import { Label } from "@/components/(ui)/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/(ui)/card";
 import { useLanguageStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useLogin, useRegister } from "@/lib/hooks/useAuth";
+import { toast } from "sonner";
 
+const queryClient = new QueryClient();
 
-export default function AuthPage() {
+function AuthForm() {
     const router = useRouter();
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const { locale, setLocale } = useLanguageStore();
-    const { login } = useAuthStore();
+    const { login: loginLocal } = useAuthStore();
+    const loginMutation = useLogin();
+    const registerMutation = useRegister();
 
     const t = (es: string, en: string) => (locale === "es" ? es : en);
 
     const toggleMode = () => setIsLogin(!isLogin);
 
-    const handleAuth = () => {
+    const handleGoogleAuth = async () => {
+        try {
+            // Redirigir al endpoint de Google OAuth del backend
+            const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/v1';
+            const googleAuthUrl = `${BACKEND}/auth/google`;
+            
+            // Redirigir a Google OAuth
+            window.location.href = googleAuthUrl;
+        } catch (error: any) {
+            toast.error(error?.message || t("Error al iniciar sesión con Google", "Error signing in with Google"));
+        }
+    };
 
+    const handleAuth = async () => {
         if (!email || !password) {
+            toast.error(t("Por favor completa todos los campos", "Please fill all fields"));
             return;
         }
-        login(email);
-        router.push("/profile/complete");
+
+        if (!isLogin) {
+            if (password !== confirmPassword) {
+                toast.error(t("Las contraseñas no coinciden", "Passwords do not match"));
+                return;
+            }
+            if (password.length < 6) {
+                toast.error(t("La contraseña debe tener al menos 6 caracteres", "Password must be at least 6 characters"));
+                return;
+            }
+        }
+
+        try {
+            if (isLogin) {
+                const result = await loginMutation.mutateAsync({ email, password });
+                // loginLocal se llama automáticamente en useLogin onSuccess
+                toast.success(t("Sesión iniciada", "Logged in successfully"));
+                router.push("/profile");
+            } else {
+                await registerMutation.mutateAsync({ 
+                    email, 
+                    password, 
+                    name: email.split('@')[0],
+                    role: 'EMPLOYEE'
+                });
+                toast.success(t("Cuenta creada exitosamente", "Account created successfully"));
+                
+                // Login automático después del registro
+                try {
+                    await loginMutation.mutateAsync({ email, password });
+                    // loginLocal se llama automáticamente en useLogin onSuccess
+                    toast.success(t("Sesión iniciada automáticamente", "Automatically logged in"));
+                    router.push("/profile");
+                } catch (loginError: any) {
+                    // Si el login automático falla, solo cambiar a modo login
+                    toast.error(t("Cuenta creada, por favor inicia sesión", "Account created, please log in"));
+                    setIsLogin(true);
+                    setPassword("");
+                    setConfirmPassword("");
+                }
+            }
+        } catch (error: any) {
+            toast.error(error?.message || t("Error en la autenticación", "Authentication error"));
+        }
     };
 
     return (
@@ -45,7 +108,7 @@ export default function AuthPage() {
                     muted
                     loop
                     playsInline
-                    poster="/placeholder.jpg"
+                    poster="/images/cards/tripa.jpg"
                 >
                     <source src="/videos/authe-video.mp4" type="video/mp4" />
                 </video>
@@ -93,7 +156,8 @@ export default function AuthPage() {
                             <Button
                                 variant="outline"
                                 className="w-full h-12 border-gray-300 text-gray-700 font-medium hover:bg-gray-50 flex items-center justify-center gap-3"
-                                onClick={() => { }}
+                                onClick={handleGoogleAuth}
+                                disabled={loginMutation.isPending || registerMutation.isPending}
                             >
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                                     <path
@@ -162,12 +226,29 @@ export default function AuthPage() {
                                             className="space-y-2 overflow-hidden"
                                         >
                                             <Label htmlFor="confirm-password" className="font-semibold text-gray-700">{t("Confirmar Contraseña", "Confirm Password")}</Label>
-                                            <Input
-                                                id="confirm-password"
-                                                type="password"
-                                                placeholder="••••••••"
-                                                className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
-                                            />
+                                            <div className="relative">
+                                                <Input
+                                                    id="confirm-password"
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    placeholder="••••••••"
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                    className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-colors pr-10"
+                                                />
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-gray-400 hover:text-gray-600"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    type="button"
+                                                >
+                                                    {showConfirmPassword ? (
+                                                        <EyeOff className="h-4 w-4" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -177,8 +258,11 @@ export default function AuthPage() {
                             <Button
                                 className="w-full h-12 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all"
                                 onClick={handleAuth}
+                                disabled={loginMutation.isPending || registerMutation.isPending}
                             >
-                                {isLogin ? t("Ingresar", "Sign In") : t("Registrarse", "Sign Up")}
+                                {(loginMutation.isPending || registerMutation.isPending) 
+                                    ? t("Procesando...", "Processing...") 
+                                    : (isLogin ? t("Ingresar", "Sign In") : t("Registrarse", "Sign Up"))}
                             </Button>
                             <div className="text-center text-sm text-gray-500">
                                 {isLogin ? t("¿No tienes una cuenta?", "Don't have an account?") : t("¿Ya tienes una cuenta?", "Already have an account?")}{" "}
@@ -194,5 +278,13 @@ export default function AuthPage() {
                 </motion.div>
             </div>
         </div>
+    );
+}
+
+export default function AuthPage() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <AuthForm />
+        </QueryClientProvider>
     );
 }

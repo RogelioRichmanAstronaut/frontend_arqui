@@ -15,9 +15,15 @@ import { DateRangePicker } from "@/components/(packages)/calendar"
 import { FlightCard, type Flight, type FlightClass } from "@/components/(flights)/flight-card"
 import { FlightDetailsModal } from "@/components/(flights)/flight-modal"
 import { BannerSection } from "@/components/banner-section"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useFlightSearch } from "@/lib/hooks/useFlights"
+import { toast } from "sonner"
 import { originCities } from "@/lib/origin-cities"
 
-export default function FlightsPage() {
+const queryClient = new QueryClient()
+
+function FlightSearchContent() {
+ 
   const { locale } = useLanguageStore()
   const t = (es: string, en: string) => (locale === "es" ? es : en)
   
@@ -45,10 +51,20 @@ export default function FlightsPage() {
   const [activePanel, setActivePanel] = useState<"dates" | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null)
-  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false)
-  const [filteredOrigins, setFilteredOrigins] = useState<string[]>([])
+  const [shouldSearch, setShouldSearch] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [filteredOrigins, setFilteredOrigins] = useState<string[]>([])
+  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false)
   const originInputRef = useRef<HTMLDivElement>(null)
+
+  const { data: apiFlights, isLoading, error } = useFlightSearch({
+    origin: origin || 'BOG',
+    destination: destination || 'MDE',
+    departureDate: departureDate || new Date().toISOString().split('T')[0],
+    returnDate: returnDate ?? undefined,
+    passengers: passengers || 1,
+    classType: classType as 'ECONOMY' | 'BUSINESS' | 'FIRST' || 'ECONOMY'
+  }, shouldSearch)
 
   // Inicializar datos desde la reserva si están disponibles
   useEffect(() => {
@@ -107,7 +123,8 @@ export default function FlightsPage() {
     return true
   }
 
-  const flights: Flight[] = [
+  // Mock flights - solo se usan como fallback cuando no hay datos de la API y no se ha realizado búsqueda
+  const mockFlights: Flight[] = [
     {
       flightId: "FL-001",
       airline: "LATAM Airlines",
@@ -248,6 +265,11 @@ export default function FlightsPage() {
     },
   ]
 
+  // Determinar qué vuelos mostrar: priorizar datos de API, usar mocks solo si no hay búsqueda activa
+  const flightsToDisplay = (apiFlights && apiFlights.length > 0) 
+    ? apiFlights 
+    : (!shouldSearch ? mockFlights : [])
+
   const handleFlightSelect = (flight: Flight, selectedClass?: FlightClass) => {
     // Abrir el modal con los detalles del vuelo
     setSelectedFlight(flight)
@@ -382,17 +404,18 @@ export default function FlightsPage() {
                 />
               </div>
               <Button 
-                className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={!!validationError}
+                className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12"
                 onClick={() => {
-                  if (!validateOriginDestination()) {
+                  if (!origin || !destination) {
+                    toast.error(t("Por favor completa origen y destino", "Please fill origin and destination"))
                     return
                   }
-                  // Search functionality can be added here
+                  setShouldSearch(true)
                 }}
+                disabled={isLoading}
               >
                 <Search className="h-5 w-5 mr-2" />
-                {t("Encuentra tu vuelo", "Find your flight")}
+                {isLoading ? t("Buscando...", "Searching...") : t("Encuentra tu vuelo", "Find your flight")}
               </Button>
             </div>
             {validationError && (
@@ -407,8 +430,35 @@ export default function FlightsPage() {
       </section>
 
       <section className="container mx-auto px-4 lg:px-8 py-12">
+        {isLoading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00C2A8] mx-auto"></div>
+            <p className="mt-4 text-gray-600">{t("Buscando vuelos disponibles...", "Searching available flights...")}</p>
+          </div>
+        )}
+        {error && (
+          <div className="text-center py-12">
+            <p className="text-red-600">{t("Error al buscar vuelos", "Error searching flights")}</p>
+            <p className="text-sm text-gray-500 mt-2">{error.message}</p>
+          </div>
+        )}
+        {!isLoading && !error && shouldSearch && flightsToDisplay.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-600">{t("No se encontraron vuelos", "No flights found")}</p>
+            <p className="text-sm text-gray-500 mt-2">
+              {t("Intenta con otros parámetros de búsqueda", "Try with different search parameters")}
+            </p>
+          </div>
+        )}
+        {!shouldSearch && flightsToDisplay.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500">
+              {t("Ingresa origen, destino y fecha para buscar vuelos", "Enter origin, destination and date to search flights")}
+            </p>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {flights.map((flight, index) => (
+          {flightsToDisplay.map((flight, index) => (
             <motion.div
               key={flight.flightId}
               initial={{ opacity: 0, y: 20 }}
@@ -432,5 +482,13 @@ export default function FlightsPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function FlightsPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <FlightSearchContent />
+    </QueryClientProvider>
   )
 }

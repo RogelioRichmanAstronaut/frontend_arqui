@@ -18,7 +18,7 @@ export default function Home() {
       airline: "Aerolínea LATAM",
       stars: 4,
       price: "$1.250.000 COP",
-      image: "/placeholder.jpg",
+      image: "/images/cards/tripa.jpg",
       includes: t(
         "Hotel 4 Estrellas + Desayuno\nVuelo directo + Traslado",
         "4-Star Hotel + Breakfast\nDirect Flight + Transfer"
@@ -30,7 +30,7 @@ export default function Home() {
       airline: "Aerolínea LATAM",
       stars: 4,
       price: "$1.250.000 COP",
-      image: "/placeholder.jpg",
+      image: "/images/cards/tripa.jpg",
       includes: t(
         "Hotel 4 Estrellas + Desayuno\nVuelo directo + Traslado",
         "4-Star Hotel + Breakfast\nDirect Flight + Transfer"
@@ -42,7 +42,7 @@ export default function Home() {
       airline: "Aerolínea LATAM",
       stars: 4,
       price: "$1.250.000 COP",
-      image: "/placeholder.jpg",
+      image: "/images/cards/tripa.jpg",
       includes: t(
         "Hotel 4 Estrellas + Desayuno\nVuelo directo + Traslado",
         "4-Star Hotel + Breakfast\nDirect Flight + Transfer"
@@ -59,7 +59,7 @@ export default function Home() {
           muted
           loop
           playsInline
-          poster="/placeholder.jpg"
+          poster="/images/cards/tripa.jpg"
           aria-hidden="true"
         >
           <source src="/videos/hero-banner.mp4" type="video/mp4" />

@@ -11,6 +11,8 @@ import { usePackageReservationStore } from "@/lib/package-reservation-store";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { useNotificationsStore } from "@/lib/notifications-store";
 import { usePaymentStore } from "@/lib/payment-store";
+import { useAuthStore } from "@/lib/auth-store";
+// import { useAddCartItem } from "@/lib/hooks/useCart"; // Deshabilitado: servicios externos
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -81,7 +83,10 @@ export default function PackagesConfirmPage() {
   const { addBooking } = useBookingsStore();
   const { addNotification } = useNotificationsStore();
   const { setPaymentInfo } = usePaymentStore();
+  const { clientId } = useAuthStore();
+  // const addCartItem = useAddCartItem(); // Deshabilitado: requiere servicios externos (Hotel, Banco)
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!hotel && !hasRedirected.current && !isConfirming.current) {
@@ -158,57 +163,74 @@ export default function PackagesConfirmPage() {
       return;
     }
 
-    if (!hotel || !searchDetails) return;
-
-    // Calculate price logic (duplicated for now to ensure data consistency)
-    const roomsRequested = searchDetails.rooms || 1;
-    const availableRooms = hotel.habitaciones
-      .filter((room) => room.disponibilidad === "DISPONIBLE")
-      .sort((a, b) => a.precio - b.precio);
-
-    let pricePerNight = 0;
-    let finalRooms = [...rooms];
-
-    if (roomsRequested <= rooms.length) {
-      pricePerNight = rooms
-        .slice(0, roomsRequested)
-        .reduce((acc, room) => acc + room.precio, 0);
-      finalRooms = rooms.slice(0, roomsRequested);
-    } else {
-      const selectedRoomsPrice = rooms.reduce((acc, room) => acc + room.precio, 0);
-      const extraRoomsNeeded = roomsRequested - rooms.length;
-      const selectedRoomIds = new Set(rooms.map((room) => room.habitacion_id));
-      const cheapestAvailableRooms = availableRooms
-        .filter((room) => !selectedRoomIds.has(room.habitacion_id))
-        .slice(0, extraRoomsNeeded);
-
-      const extraRoomsPrice = cheapestAvailableRooms.reduce((acc, room) => acc + room.precio, 0);
-      pricePerNight = selectedRoomsPrice + extraRoomsPrice;
-      finalRooms = [...rooms, ...cheapestAvailableRooms];
+    if (!hotel || !searchDetails || !clientId) {
+      setValidationError("Debes iniciar sesión para continuar");
+      return;
     }
 
-    const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
-    const totalEstimated = pricePerNight * nights;
-
-    // Save booking (will be updated to 'confirmed' after payment)
-    addBooking({
-      id: uuidv4(),
-      date: new Date().toISOString(),
-      hotel: hotel,
-      rooms: finalRooms,
-      checkIn: searchDetails.checkIn || new Date().toISOString(),
-      checkOut: searchDetails.checkOut || new Date().toISOString(),
-      totalPrice: totalEstimated,
-      status: 'pending'
-    });
-
-    isConfirming.current = true;
+    setIsProcessing(true);
 
     try {
+      // Calculate price logic
+      const roomsRequested = searchDetails.rooms || 1;
+      const availableRooms = hotel.habitaciones
+        .filter((room) => room.disponibilidad === "DISPONIBLE")
+        .sort((a, b) => a.precio - b.precio);
+
+      let pricePerNight = 0;
+      let finalRooms = [...rooms];
+
+      if (roomsRequested <= rooms.length) {
+        pricePerNight = rooms
+          .slice(0, roomsRequested)
+          .reduce((acc, room) => acc + room.precio, 0);
+        finalRooms = rooms.slice(0, roomsRequested);
+      } else {
+        const selectedRoomsPrice = rooms.reduce((acc, room) => acc + room.precio, 0);
+        const extraRoomsNeeded = roomsRequested - rooms.length;
+        const selectedRoomIds = new Set(rooms.map((room) => room.habitacion_id));
+        const cheapestAvailableRooms = availableRooms
+          .filter((room) => !selectedRoomIds.has(room.habitacion_id))
+          .slice(0, extraRoomsNeeded);
+
+        const extraRoomsPrice = cheapestAvailableRooms.reduce((acc, room) => acc + room.precio, 0);
+        pricePerNight = selectedRoomsPrice + extraRoomsPrice;
+        finalRooms = [...rooms, ...cheapestAvailableRooms];
+      }
+
+      const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
+      const totalEstimated = pricePerNight * nights;
+
+      // TODO: Integración futura con backend de carrito cuando los servicios externos estén listos
+      // Por ahora guardar solo localmente para pruebas de Solución Turismo
+      console.log('📦 Guardando paquete localmente (servicios externos pendientes):', {
+        hotelId: hotel.hotel_id,
+        roomId: finalRooms[0]?.habitacion_id,
+        checkIn: searchDetails.checkIn,
+        checkOut: searchDetails.checkOut,
+        totalPrice: totalEstimated
+      });
+
+      // Save booking locally (will be updated to 'confirmed' after payment)
+      addBooking({
+        id: uuidv4(),
+        date: new Date().toISOString(),
+        hotel: hotel,
+        rooms: finalRooms,
+        checkIn: searchDetails.checkIn || new Date().toISOString(),
+        checkOut: searchDetails.checkOut || new Date().toISOString(),
+        totalPrice: totalEstimated,
+        status: 'pending'
+      });
+
+      isConfirming.current = true;
+
       // Redirect to flights page to select flight
       await router.replace("/flights");
-    } catch (e) {
-      // ...
+    } catch (error) {
+      console.error('Error en confirmación:', error);
+      setValidationError("Error al procesar. Intenta nuevamente.");
+      setIsProcessing(false);
     }
   };
 
@@ -460,8 +482,9 @@ export default function PackagesConfirmPage() {
           <Button
             className="flex-1 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white"
             onClick={handleConfirm}
+            disabled={isProcessing}
           >
-            Confirmar datos
+            {isProcessing ? "Procesando..." : "Confirmar datos"}
           </Button>
         </div>
       </div>

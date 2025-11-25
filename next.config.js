@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Removed 'output: export' to allow API routes to work
+  // If you need static export, use it only for production builds without API routes
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -116,10 +116,12 @@ export function HotelDetailsModal({ hotel, onClose }: HotelDetailsModalProps) {
   };
 
   const nextPhoto = () => {
+    if (!hotel.fotos || hotel.fotos.length === 0) return;
     setCurrentPhotoIndex((prev) => (prev + 1) % hotel.fotos.length);
   };
 
   const prevPhoto = () => {
+    if (!hotel.fotos || hotel.fotos.length === 0) return;
     setCurrentPhotoIndex((prev) => (prev - 1 + hotel.fotos.length) % hotel.fotos.length);
   };
 
@@ -143,33 +145,46 @@ export function HotelDetailsModal({ hotel, onClose }: HotelDetailsModalProps) {
 
         <div className="p-6 space-y-6">
           <div className="relative h-80 bg-gray-200 rounded-lg overflow-hidden group">
-            <NextImage
-              src={hotel.fotos[currentPhotoIndex]}
-              alt={`${hotel.nombre} - Foto ${currentPhotoIndex + 1}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 800px"
-              priority
-            />
-            {hotel.fotos.length > 1 && (
+            {hotel.fotos && hotel.fotos.length > 0 ? (
               <>
-                <button
-                  onClick={prevPhoto}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <ChevronLeft className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={nextPhoto}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <ChevronRight className="h-6 w-6" />
-                </button>
+                <NextImage
+                  src={hotel.fotos[currentPhotoIndex] || hotel.fotos[0]}
+                  alt={`${hotel.nombre} - Foto ${currentPhotoIndex + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  priority
+                  onError={(e) => {
+                    // Fallback to default image if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/images/cards/default-hotel.jpg';
+                  }}
+                />
+                    {hotel.fotos.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevPhoto}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ChevronLeft className="h-6 w-6" />
+                    </button>
+                    <button
+                      onClick={nextPhoto}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <ChevronRight className="h-6 w-6" />
+                    </button>
+                  </>
+                )}
+                <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded text-sm">
+                  {currentPhotoIndex + 1} / {hotel.fotos.length}
+                </div>
               </>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <p>No hay imágenes disponibles</p>
+              </div>
             )}
-            <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded text-sm">
-              {currentPhotoIndex + 1} / {hotel.fotos.length}
-            </div>
           </div>
 
           <div className="space-y-4">

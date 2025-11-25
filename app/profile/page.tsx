@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { useLanguageStore } from "@/lib/store";
 import { Button } from "@/components/(ui)/button";
@@ -8,11 +9,47 @@ import { Input } from "@/components/(ui)/input";
 import { Label } from "@/components/(ui)/label";
 import { Separator } from "@/components/(ui)/separator";
 import { toast } from "sonner";
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { useMyClient, useUpdateMyClient } from "@/lib/hooks/useProfile";
 
-export default function ProfilePage() {
-    const { user, updateUser } = useAuthStore();
+const queryClient = new QueryClient();
+
+function ProfileContent() {
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    const { user, updateUser: updateLocal, hasCompleteProfile, setClientId } = useAuthStore();
     const { locale } = useLanguageStore();
     const t = (es: string, en: string) => (locale === "es" ? es : en);
+
+    // Usar el nuevo endpoint /clients/me
+    const { data: clientData, isLoading: loadingClient } = useMyClient();
+    
+    // Guardar el clientId cuando se obtiene del backend
+    useEffect(() => {
+        if (clientData?.clientId) {
+            setClientId(clientData.clientId);
+            
+            // Actualizar el estado local si el cliente tiene datos
+            if (clientData.name && clientData.phone && !hasCompleteProfile()) {
+                updateLocal({
+                    names: clientData.name,
+                    phone: clientData.phone,
+                    idNumber: clientData.clientId?.replace('CC-', '') || '',
+                });
+            }
+        }
+    }, [clientData, hasCompleteProfile, updateLocal, setClientId]);
+    
+    // Redirect to complete profile if incomplete (solo si NO está cargando)
+    useEffect(() => {
+        if (!loadingClient && user && !hasCompleteProfile() && !clientData) {
+            console.log('⚠️ Perfil incompleto, redirigiendo a complete-profile');
+            router.push('/profile/complete');
+        }
+    }, [user, hasCompleteProfile, router, loadingClient, clientData]);
+
+    // Usar el nuevo hook que actualiza el cliente autenticado directamente
+    const updateClientMutation = useUpdateMyClient();
 
     const [formData, setFormData] = useState({
         names: "",
@@ -23,7 +60,15 @@ export default function ProfilePage() {
     });
 
     useEffect(() => {
-        if (user) {
+        if (clientData) {
+            setFormData({
+                names: clientData.name || "",
+                email: clientData.email || "",
+                country: clientData.address || "",
+                phone: clientData.phone || "", // Usar 'phone' en lugar de 'phoneNumber'
+                idNumber: clientData.clientId || "",
+            });
+        } else if (user) {
             setFormData({
                 names: user.names || "",
                 email: user.email || "",
@@ -32,17 +77,28 @@ export default function ProfilePage() {
                 idNumber: user.idNumber || "",
             });
         }
-    }, [user]);
+    }, [clientData, user]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        updateUser(formData);
-        toast.success(t("Perfil actualizado correctamente", "Profile updated successfully"));
+        try {
+            // Actualizar usando el endpoint /clients/me que no requiere ID
+            await updateClientMutation.mutateAsync({
+                name: formData.names,
+                email: formData.email,
+                phone: formData.phone,
+            });
+            updateLocal(formData);
+            toast.success(t("Perfil actualizado correctamente", "Profile updated successfully"));
+        } catch (error: any) {
+            console.error('Error al actualizar perfil:', error);
+            toast.error(error?.message || t("Error al actualizar perfil", "Error updating profile"));
+        }
     };
 
     return (
@@ -119,11 +175,29 @@ export default function ProfilePage() {
                     <Button
                         type="submit"
                         className="h-12 px-8 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-semibold text-lg shadow-md hover:shadow-lg transition-all"
+                        disabled={updateClientMutation.isPending || loadingClient}
                     >
-                        {t("Guardar Cambios", "Save Changes")}
+                        {updateClientMutation.isPending 
+                            ? t("Guardando...", "Saving...") 
+                            : t("Guardar Cambios", "Save Changes")}
                     </Button>
                 </div>
             </form>
+
+            {loadingClient && (
+                <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00C2A8] mx-auto"></div>
+                    <p className="mt-2 text-sm text-gray-500">{t("Cargando perfil...", "Loading profile...")}</p>
+                </div>
+            )}
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <QueryClientProvider client={queryClient}>
+            <ProfileContent />
+        </QueryClientProvider>
     );
 }
