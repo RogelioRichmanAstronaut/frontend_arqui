@@ -64,7 +64,7 @@ function ProfileContent() {
             setFormData({
                 names: clientData.name || "",
                 email: clientData.email || "",
-                country: clientData.address || "",
+                country: "", // address property doesn't exist in ClientDto
                 phone: clientData.phone || "", // Usar 'phone' en lugar de 'phoneNumber'
                 idNumber: clientData.clientId || "",
             });

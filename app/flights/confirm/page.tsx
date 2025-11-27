@@ -197,8 +197,8 @@ export default function FlightsConfirmPage() {
         packageDescription = `Paquete ${packageHotel.nombre} #${packageHotel.hotel_id}`;
       }
 
-      // Use quote total if available, otherwise calculate
-      const totalAmount = quoteData?.total || (packageTotal + flightTotal);
+      // Use calculated total (quote service is disabled)
+      const totalAmount = packageTotal + flightTotal;
 
       // Build description
       const descriptions = [];
@@ -225,7 +225,7 @@ export default function FlightsConfirmPage() {
         returnDate: searchDetails.returnDate,
         passengers: searchDetails.passengers,
         totalPrice: flightTotal,
-        status: 'pending'
+        status: 'confirmed'
       });
 
       isConfirming.current = true;
