@@ -250,8 +250,8 @@ export default function FlightsConfirmPage() {
 
       isConfirming.current = true;
 
-      // Redirect to bank payment page
-      await router.replace("/bank");
+      // Redirect to cart page (user reviews cart before payment)
+      await router.replace("/cart");
     } catch (error) {
       console.error('Error en confirmación:', error);
       setValidationError(t("Error al procesar. Intenta nuevamente.", "Error processing. Please try again."));

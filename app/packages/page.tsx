@@ -95,7 +95,7 @@ function PackagesContent() {
           habitacion_id: room.roomId,
           tipo: room.type,
           disponibilidad: room.available ? 'DISPONIBLE' : 'NO_DISPONIBLE',
-          codigo_tipo_habitacion: room.roomId,
+          codigo_tipo_habitacion: room.roomCode || 'doble',  // Usar roomCode para reservas
           precio: room.price || 0,
           servicios_habitacion: []
         }))

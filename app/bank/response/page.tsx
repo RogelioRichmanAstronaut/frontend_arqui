@@ -10,6 +10,7 @@ import { useLanguageStore } from "@/lib/store";
 import { useAirConfirm, useHotelConfirm } from "@/lib/hooks/useBookings";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { toast } from "sonner";
+import { apiClient } from "@/lib/api/client";
 
 export default function BankResponsePage() {
   const router = useRouter();
@@ -35,12 +36,17 @@ export default function BankResponsePage() {
   const confirmBookings = async (transactionId: string) => {
     setIsConfirming(true);
     
-    // Confirm flights
+    // Confirm flights - usar flightReservationId si existe, sino flightId
     if (localFlightBookings.length > 0) {
       try {
         for (const booking of localFlightBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')) {
+          // Preferir el ID real de reservación del backend
+          const reservationId = booking.flightReservationId || booking.flight.flightId;
+          if (!booking.flightReservationId) {
+            console.warn('No se encontró flightReservationId, usando flightId:', booking.flight.flightId);
+          }
           await airConfirm.mutateAsync({
-            flightReservationId: booking.flight.flightId,
+            flightReservationId: reservationId,
             transactionId,
           });
         }
@@ -55,12 +61,17 @@ export default function BankResponsePage() {
       setConfirmationStatus(prev => ({ ...prev, flights: 'success' }));
     }
 
-    // Confirm hotels
+    // Confirm hotels - usar hotelReservationId si existe, sino hotel_id
     if (localBookings.length > 0) {
       try {
         for (const booking of localBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')) {
+          // Preferir el ID real de reservación del backend
+          const reservationId = booking.hotelReservationId || booking.hotel.hotel_id;
+          if (!booking.hotelReservationId) {
+            console.warn('No se encontró hotelReservationId, usando hotel_id:', booking.hotel.hotel_id);
+          }
           await hotelConfirm.mutateAsync({
-            hotelReservationId: booking.hotel.hotel_id,
+            hotelReservationId: reservationId,
             transactionId,
           });
         }
@@ -79,36 +90,73 @@ export default function BankResponsePage() {
   };
 
   useEffect(() => {
-    // Parse response from bank callback
-    const referencia = searchParams.get("referencia_transaccion");
-    const estado = searchParams.get("estado_transaccion");
-    const monto = searchParams.get("monto_transaccion");
-    const fecha = searchParams.get("fecha_hora_pago");
-    const codigo = searchParams.get("codigo_respuesta");
-    const metodo = searchParams.get("metodo_pago");
-
-    if (referencia && estado && monto && fecha && codigo && metodo) {
-      const paymentResponse: PaymentResponse = {
-        referencia_transaccion: referencia,
-        estado_transaccion: estado as "APROBADA" | "RECHAZADA" | "PENDIENTE",
-        monto_transaccion: parseFloat(monto),
-        fecha_hora_pago: fecha,
-        codigo_respuesta: codigo,
-        metodo_pago: metodo,
-      };
+    const processPaymentResponse = async () => {
+      // Parse response from bank redirect
+      // Según docs oficiales, la redirección solo incluye:
+      // - referencia_transaccion (obligatorio)
+      // - estado_transaccion (obligatorio)
+      // - codigo_autorizacion (solo si aprobada)
+      const referencia = searchParams.get("referencia_transaccion");
+      const estado = searchParams.get("estado_transaccion");
+      const codigoAuth = searchParams.get("codigo_autorizacion");
       
-      setResponse(paymentResponse);
-      setPaymentResponse(paymentResponse);
-      setIsProcessing(false);
+      // Campos opcionales (vienen en el webhook, no en redirect)
+      let monto = searchParams.get("monto_transaccion");
+      let fecha = searchParams.get("fecha_hora_pago");
+      let codigo = searchParams.get("codigo_respuesta");
+      let metodo = searchParams.get("metodo_pago");
 
-      // If payment is approved, confirm bookings with external services
-      if (estado === "APROBADA") {
-        confirmBookings(referencia);
+      // Solo necesitamos referencia y estado para procesar
+      if (referencia && estado) {
+        // Si no tenemos el monto, consultamos al backend
+        if (!monto) {
+          try {
+            const statusResponse = await apiClient<{
+              state: string;
+              stateDetail?: string;
+              totalAmount: number;
+              currency: string;
+              authCode?: string;
+              receiptRef?: string;
+              lastUpdateAt?: string;
+            }>(`/payments/sync?transactionId=${encodeURIComponent(referencia)}`, {
+              method: 'GET',
+            });
+            
+            if (statusResponse) {
+              monto = statusResponse.totalAmount?.toString() || '0';
+              fecha = statusResponse.lastUpdateAt || new Date().toISOString();
+              metodo = metodo || 'PSE';
+            }
+          } catch (err) {
+            console.warn('No se pudo obtener detalles del pago:', err);
+          }
+        }
+
+        const paymentResponse: PaymentResponse = {
+          referencia_transaccion: referencia,
+          estado_transaccion: estado as "APROBADA" | "RECHAZADA" | "PENDIENTE",
+          monto_transaccion: monto ? parseFloat(monto) : 0,
+          fecha_hora_pago: fecha || new Date().toISOString(),
+          codigo_respuesta: codigo || codigoAuth || "00",
+          metodo_pago: metodo || "PSE",
+        };
+        
+        setResponse(paymentResponse);
+        setPaymentResponse(paymentResponse);
+        setIsProcessing(false);
+
+        // If payment is approved, confirm bookings with external services
+        if (estado === "APROBADA") {
+          confirmBookings(referencia);
+        }
+      } else {
+        setError(t("No se recibió respuesta del banco", "No response received from bank"));
+        setIsProcessing(false);
       }
-    } else {
-      setError(t("No se recibió respuesta del banco", "No response received from bank"));
-      setIsProcessing(false);
-    }
+    };
+
+    processPaymentResponse();
   }, [searchParams, setPaymentResponse]);
 
   if (isProcessing) {

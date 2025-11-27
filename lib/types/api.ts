@@ -41,7 +41,13 @@ export type CartAddItemDto = {
 };
 
 export type CartItemDto = { id: string } & CartAddItemDto & { createdAt: string };
-export type CartDto = { clientId: string; items: CartItemDto[]; currency: string };
+export type CartDto = { 
+  id: string;           // UUID del carrito
+  clientId: string; 
+  items: CartItemDto[]; 
+  currency: string;
+  total?: number;
+};
 
 // Checkout
 export type CheckoutQuoteRequestDto = { clientId: string; cartId?: string };

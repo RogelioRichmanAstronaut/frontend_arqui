@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { useAuthStore } from "@/lib/auth-store";
 import { useReservations, useCancelReservation } from "@/lib/hooks/useReservations";
@@ -16,16 +16,28 @@ import { es } from "date-fns/locale";
 import { toast } from "sonner";
 
 export default function BookingsPage() {
-    const { bookings: localBookings, flightBookings: localFlightBookings, removeBooking, removeFlightBooking } = useBookingsStore();
-    const { clientId, user } = useAuthStore();
-    const clientUuid = user?.id;
-    const { data: backendReservations, isLoading, error, refetch } = useReservations(clientUuid);
+    // Las reservas locales ya no se usan - el backend guarda las reservaciones
+    const { bookings: localBookings, flightBookings: localFlightBookings, removeBooking, removeFlightBooking, clearAllBookings } = useBookingsStore();
+    const { clientId } = useAuthStore();
+    // Usar clientId (CC-XXXXX) porque el backend busca por ese campo, no por user.id
+    const { data: backendReservations, isLoading, error, refetch } = useReservations(clientId || undefined);
     const cancelReservation = useCancelReservation();
     const cancelAir = useAirCancel();
     const cancelHotel = useHotelCancel();
     const { locale } = useLanguageStore();
     const t = (esStr: string, enStr: string) => (locale === "es" ? esStr : enStr);
     const [cancellingId, setCancellingId] = useState<string | null>(null);
+    
+    // Si hay reservas en el backend, limpiar las locales (ya no son necesarias)
+    const hasBackendBookings = backendReservations && backendReservations.length > 0;
+    const hasLocalBookings = localBookings.length > 0 || localFlightBookings.length > 0;
+    
+    useEffect(() => {
+        if (hasBackendBookings && hasLocalBookings) {
+            // Las reservas locales sobran porque ya están en el backend
+            clearAllBookings();
+        }
+    }, [hasBackendBookings, hasLocalBookings, clearAllBookings]);
 
     // Handler para cancelar reservación del backend
     const handleCancelReservation = async (reservationId: string) => {
@@ -48,10 +60,18 @@ export default function BookingsPage() {
     // Handler para cancelar vuelo
     const handleCancelFlight = async (booking: any) => {
         if (!confirm(t("¿Estás seguro de cancelar este vuelo?", "Are you sure you want to cancel this flight?"))) return;
+        
+        // Usar flightReservationId si existe (del backend), sino flightId (fallback)
+        const confirmedId = booking.flightReservationId || booking.flight.flightId;
+        
+        if (!booking.flightReservationId) {
+            console.warn('No se encontró flightReservationId, usando flightId como fallback. Esto puede causar errores.');
+        }
+        
         setCancellingId(booking.id);
         try {
             await cancelAir.mutateAsync({
-                confirmedId: booking.flight.flightId,
+                confirmedId: confirmedId,
                 reservationId: booking.id,
                 origin: 'CLIENTE',
                 reason: t("Cancelación solicitada por el cliente", "Cancellation requested by customer"),
@@ -65,13 +85,21 @@ export default function BookingsPage() {
         }
     };
 
-    // Handler para cancelar hotel
+    // Handler para cancelar hotel (local)
     const handleCancelHotel = async (booking: any) => {
         if (!confirm(t("¿Estás seguro de cancelar este hotel?", "Are you sure you want to cancel this hotel?"))) return;
+        
+        // Usar hotelReservationId si existe (del backend), sino hotel_id (fallback)
+        const confirmedId = booking.hotelReservationId || booking.hotel.hotel_id;
+        
+        if (!booking.hotelReservationId) {
+            console.warn('No se encontró hotelReservationId, usando hotel_id como fallback. Esto puede causar errores.');
+        }
+        
         setCancellingId(booking.id);
         try {
             await cancelHotel.mutateAsync({
-                confirmedId: booking.hotel.hotel_id,
+                confirmedId: confirmedId,
                 reservationId: booking.id,
                 origin: 'CLIENTE',
                 reason: t("Cancelación solicitada por el cliente", "Cancellation requested by customer"),
@@ -85,6 +113,48 @@ export default function BookingsPage() {
         }
     };
 
+    // Handler para cancelar hotel booking del backend
+    const handleCancelHotelBooking = async (extBookingId: string, reservationId: string) => {
+        if (!confirm(t("¿Estás seguro de cancelar este hotel?", "Are you sure you want to cancel this hotel?"))) return;
+        
+        setCancellingId(extBookingId);
+        try {
+            await cancelHotel.mutateAsync({
+                confirmedId: extBookingId,
+                reservationId: reservationId,
+                origin: 'CLIENTE',
+                reason: t("Cancelación solicitada por el cliente", "Cancellation requested by customer"),
+            });
+            toast.success(t("Hotel cancelado", "Hotel cancelled"));
+            refetch();
+        } catch (err: any) {
+            toast.error(err.message || t("Error al cancelar hotel", "Error cancelling hotel"));
+        } finally {
+            setCancellingId(null);
+        }
+    };
+
+    // Handler para cancelar flight booking del backend
+    const handleCancelFlightBooking = async (extBookingId: string, reservationId: string) => {
+        if (!confirm(t("¿Estás seguro de cancelar este vuelo?", "Are you sure you want to cancel this flight?"))) return;
+        
+        setCancellingId(extBookingId);
+        try {
+            await cancelAir.mutateAsync({
+                confirmedId: extBookingId,
+                reservationId: reservationId,
+                origin: 'CLIENTE',
+                reason: t("Cancelación solicitada por el cliente", "Cancellation requested by customer"),
+            });
+            toast.success(t("Vuelo cancelado", "Flight cancelled"));
+            refetch();
+        } catch (err: any) {
+            toast.error(err.message || t("Error al cancelar vuelo", "Error cancelling flight"));
+        } finally {
+            setCancellingId(null);
+        }
+    };
+
     const formatDate = (dateStr: string) => {
         try {
             return format(new Date(dateStr), "PPP", { locale: locale === "es" ? es : undefined });
@@ -93,18 +163,25 @@ export default function BookingsPage() {
         }
     };
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status?: string) => {
+        if (!status) return { variant: 'secondary' as const, label: t("Desconocido", "Unknown") };
+        
         const statusMap: Record<string, { variant: "default" | "destructive" | "secondary", label: string }> = {
+            // Estados del frontend (minúsculas)
             'confirmed': { variant: 'default', label: t("Confirmada", "Confirmed") },
             'cancelled': { variant: 'destructive', label: t("Cancelada", "Cancelled") },
             'completed': { variant: 'secondary', label: t("Completada", "Completed") },
             'pending': { variant: 'secondary', label: t("Pendiente", "Pending") },
+            // Estados del backend (mayúsculas - Prisma enum)
+            'pendiente': { variant: 'secondary', label: t("Pendiente", "Pending") },
+            'aprobada': { variant: 'default', label: t("Aprobada", "Approved") },
+            'denegada': { variant: 'destructive', label: t("Denegada", "Denied") },
+            'cancelada': { variant: 'destructive', label: t("Cancelada", "Cancelled") },
         };
         return statusMap[status.toLowerCase()] || { variant: 'secondary', label: status };
     };
 
-    const hasLocalBookings = localBookings.length > 0 || localFlightBookings.length > 0;
-    const hasBackendBookings = backendReservations && backendReservations.length > 0;
+    // hasLocalBookings y hasBackendBookings ya están definidos arriba
     const hasBookings = hasLocalBookings || hasBackendBookings;
 
     return (
@@ -133,10 +210,18 @@ export default function BookingsPage() {
                 </div>
             )}
             
-            {error && (
+            {!clientId && (
+                <div className="p-4 border border-blue-200 bg-blue-50 rounded-lg text-sm text-blue-800">
+                    <AlertTriangle className="h-4 w-4 inline mr-2" />
+                    {t("Completa tu perfil para ver tus reservaciones. Ve a Perfil → Completar datos.", 
+                       "Complete your profile to see your reservations. Go to Profile → Complete data.")}
+                </div>
+            )}
+            
+            {error && clientId && (
                 <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg text-sm text-yellow-800">
-                    {t("No se pudieron cargar las reservas del servidor. Mostrando solo reservas locales.", 
-                       "Could not load server reservations. Showing only local bookings.")}
+                    {t("No se pudieron cargar las reservas del servidor.", 
+                       "Could not load server reservations.")}
                 </div>
             )}
 
@@ -157,20 +242,99 @@ export default function BookingsPage() {
                                             {formatDate(reservation.createdAt)}
                                         </CardDescription>
                                     </div>
-                                    <Badge variant={getStatusBadge(reservation.status).variant}>
-                                        {getStatusBadge(reservation.status).label}
+                                    <Badge variant={getStatusBadge(reservation.state || reservation.status).variant}>
+                                        {getStatusBadge(reservation.state || reservation.status).label}
                                     </Badge>
                                 </div>
                             </CardHeader>
-                            <CardContent>
-                                <div className="flex items-center justify-between">
+                            <CardContent className="space-y-4">
+                                {/* Hotels */}
+                                {reservation.hotelBookings?.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h5 className="text-sm font-medium flex items-center gap-1">
+                                            <HotelIcon className="h-4 w-4" /> {t("Hoteles", "Hotels")}
+                                        </h5>
+                                        {reservation.hotelBookings.map((hb: any) => (
+                                            <div key={hb.id} className="pl-5 border-l-2 border-[#00C2A8]/30 text-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <span className="font-medium">{hb.propertyCode}</span>
+                                                        <span className="text-muted-foreground ml-2">
+                                                            {formatDate(hb.checkIn)} → {formatDate(hb.checkOut)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant={getStatusBadge(hb.state).variant} className="text-xs">
+                                                            {getStatusBadge(hb.state).label}
+                                                        </Badge>
+                                                        {hb.state === 'PENDIENTE' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleCancelHotelBooking(hb.extBookingId, reservation.id)}
+                                                                className="h-6 text-red-500 hover:text-red-700 p-1"
+                                                            >
+                                                                <XCircle className="h-3 w-3" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-muted-foreground">
+                                                    ${Number(hb.totalAmount).toLocaleString('es-CO')} {hb.currency}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Flights */}
+                                {reservation.flightBookings?.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h5 className="text-sm font-medium flex items-center gap-1">
+                                            <Plane className="h-4 w-4" /> {t("Vuelos", "Flights")}
+                                        </h5>
+                                        {reservation.flightBookings.map((fb: any) => (
+                                            <div key={fb.id} className="pl-5 border-l-2 border-blue-300/30 text-sm">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <span className="font-medium">{fb.origin} → {fb.destination}</span>
+                                                        <span className="text-muted-foreground ml-2">
+                                                            {formatDate(fb.departureAt)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant={getStatusBadge(fb.state).variant} className="text-xs">
+                                                            {getStatusBadge(fb.state).label}
+                                                        </Badge>
+                                                        {fb.state === 'PENDIENTE' && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleCancelFlightBooking(fb.extBookingId, reservation.id)}
+                                                                className="h-6 text-red-500 hover:text-red-700 p-1"
+                                                            >
+                                                                <XCircle className="h-3 w-3" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-muted-foreground">
+                                                    ${Number(fb.totalAmount).toLocaleString('es-CO')} {fb.currency} • PNR: {fb.pnr?.slice(0, 8)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {/* Total y cancelar reservación */}
+                                <div className="flex items-center justify-between pt-2 border-t">
                                     <div className="flex items-center gap-4 text-sm">
-                                        <span className="flex items-center gap-1">
+                                        <span className="flex items-center gap-1 font-medium">
                                             <DollarSign className="h-4 w-4 text-[#00C2A8]" />
-                                            ${reservation.totalAmount?.toLocaleString('es-CO')} {reservation.currency}
+                                            Total: ${reservation.totalAmount?.toLocaleString('es-CO')} {reservation.currency}
                                         </span>
                                     </div>
-                                    {reservation.status !== 'CANCELLED' && reservation.status !== 'cancelled' && (
+                                    {(reservation.state || reservation.status || '').toUpperCase() === 'PENDIENTE' && (
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -181,7 +345,7 @@ export default function BookingsPage() {
                                             <XCircle className="h-4 w-4 mr-1" />
                                             {cancellingId === reservation.id 
                                                 ? t("Cancelando...", "Cancelling...") 
-                                                : t("Cancelar", "Cancel")}
+                                                : t("Cancelar Todo", "Cancel All")}
                                         </Button>
                                     )}
                                 </div>

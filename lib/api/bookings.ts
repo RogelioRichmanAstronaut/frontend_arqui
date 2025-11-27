@@ -139,7 +139,7 @@ export interface HotelConfirmResponse {
 export interface HotelCancelRequest {
   confirmedId: string;
   reservationId: string;
-  origin: 'CLIENTE' | 'HOTEL';
+  origin: 'CLIENTE' | 'TURISMO';  // Backend espera CLIENTE o TURISMO, no HOTEL
   reason: string;
   notes?: string;
 }

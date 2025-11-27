@@ -21,16 +21,14 @@ export function useLogin() {
       }
       
       // Guardar datos del usuario en el store para persistencia
-      if (data?.user) {
-        loginStore(variables.email);
-        // Si el backend devuelve más datos del usuario, actualizarlos
-        if (data.user.name || data.user.email) {
-          // Los datos adicionales se cargarán desde el perfil
-        }
-      } else {
-        // Si no hay datos del usuario en la respuesta, al menos guardar el email
-        loginStore(variables.email);
-      }
+      // IMPORTANTE: Incluir el id para poder consultar reservaciones
+      const userData = data?.user ? {
+        id: data.user.id,
+        names: data.user.name,
+        role: data.user.role,
+      } : undefined;
+      
+      loginStore(variables.email, userData);
       
       // If backend returns user data with clientId, store it in both localStorage and store
       if (data?.user?.clientId) {

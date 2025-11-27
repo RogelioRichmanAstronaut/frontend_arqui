@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 import { useCart, useRemoveCartItem, useClearCart } from "@/lib/hooks/useCart";
 import { useLanguageStore } from "@/lib/store";
+import { useBookingsStore } from "@/lib/bookings-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/(ui)/card";
 import { Button } from "@/components/(ui)/button";
 import { Skeleton } from "@/components/(ui)/skeleton";
@@ -26,6 +27,7 @@ export default function CartPage() {
   const router = useRouter();
   const { clientId, isAuthenticated } = useAuthStore();
   const { locale } = useLanguageStore();
+  const { updateBookingReservationId, updateFlightBookingReservationId, clearAllBookings } = useBookingsStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
@@ -50,8 +52,13 @@ export default function CartPage() {
 
     setIsCheckingOut(true);
     try {
-      // Get cart ID from first item or use a generated one
-      const cartId = cartData.items[0]?.cartId || `cart-${Date.now()}`;
+      // Get cart ID from the cart response (NOT from items)
+      const actualCartId = cartData?.id;
+      if (!actualCartId) {
+        toast.error(t("Error: No se encontró ID del carrito", "Error: Cart ID not found"));
+        setIsCheckingOut(false);
+        return;
+      }
       
       // Build description from items
       const description = cartData.items.map((item: any) => 
@@ -68,15 +75,17 @@ export default function CartPage() {
         bankPaymentUrl: string;
         initialState: string;
         expiresAt: string;
+        hotelReservations: Array<{ hotelReservationId: string; expiresAt: string }>;
+        flightReservations: Array<{ flightReservationId: string; expiresAt: string }>;
       }>('/checkout/confirm', {
         method: 'POST',
         body: {
           clientId,
           currency: 'COP',
-          cartId,
+          cartId: actualCartId,  // Use the real cart ID from database
           description: description || 'Paquete Turístico',
           returnUrl: `${window.location.origin}/bank/response`,
-          callbackUrl: `${window.location.origin}/api/bank/notificacion`,
+          callbackUrl: `${window.location.origin}/v1/payments/webhook`,  // Backend webhook endpoint
         },
         idempotencyKey: `checkout-${Date.now()}`,
       });
@@ -85,7 +94,36 @@ export default function CartPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('lastReservationId', response.reservationId);
         localStorage.setItem('lastPaymentAttemptId', response.paymentAttemptId);
+        
+        // Guardar IDs de reservaciones de hotel y vuelo
+        if (response.hotelReservations?.length) {
+          localStorage.setItem('hotelReservations', JSON.stringify(response.hotelReservations));
+        }
+        if (response.flightReservations?.length) {
+          localStorage.setItem('flightReservations', JSON.stringify(response.flightReservations));
+        }
       }
+      
+      // Actualizar los bookings locales con los IDs reales del backend
+      // Mapear hotelReservationId a los bookings basándose en el orden del carrito
+      const hotelItems = cartData?.items?.filter((item: any) => item.kind === 'HOTEL') || [];
+      response.hotelReservations?.forEach((hr, index) => {
+        const hotelItem = hotelItems[index];
+        if (hotelItem?.metadata?.hotelId) {
+          updateBookingReservationId(hotelItem.metadata.hotelId, hr.hotelReservationId);
+        }
+      });
+      
+      const flightItems = cartData?.items?.filter((item: any) => item.kind === 'AIR') || [];
+      response.flightReservations?.forEach((fr, index) => {
+        const flightItem = flightItems[index];
+        if (flightItem?.metadata?.flightId) {
+          updateFlightBookingReservationId(flightItem.metadata.flightId, fr.flightReservationId);
+        }
+      });
+      
+      // Limpiar las reservas locales - ya están guardadas en el backend
+      clearAllBookings();
 
       toast.success(t("Reserva creada, redirigiendo al banco...", "Reservation created, redirecting to bank..."));
 

@@ -20,7 +20,8 @@ export type HotelResult = {
   images: string[];
   amenities: string[];
   rooms: Array<{
-    roomId: string;
+    roomId: string;      // UUID de la habitación (para referencia)
+    roomCode: string;    // Código de tipo (doble, simple) - ESTO se usa para reservas
     type: string;
     price: number;
     available: boolean;
@@ -84,7 +85,8 @@ export function useHotelSearch(params: HotelSearchRequest, enabled: boolean = fa
         images: response.photos || [],
         amenities: response.amenities || [],
         rooms: (response.roomTypes || []).map((rt) => ({
-          roomId: rt.roomId || rt.roomCode,
+          roomId: rt.roomId || rt.roomCode,      // UUID para referencia
+          roomCode: rt.roomCode || 'doble',      // Código tipo para reservas
           type: rt.roomType,
           price: rt.priceTotal,
           available: rt.available !== false,

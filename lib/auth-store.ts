@@ -15,7 +15,7 @@ interface AuthStore {
     isAuthenticated: boolean;
     user: User | null;
     clientId: string | null;
-    login: (email: string) => void;
+    login: (email: string, userData?: Partial<User>) => void;
     logout: () => void;
     updateUser: (data: Partial<User>) => void;
     setClientId: (clientId: string) => void;
@@ -28,7 +28,10 @@ export const useAuthStore = create<AuthStore>()(
             isAuthenticated: false,
             user: null,
             clientId: null,
-            login: (email) => set({ isAuthenticated: true, user: { email } }),
+            login: (email, userData) => set({ 
+                isAuthenticated: true, 
+                user: { email, ...userData } 
+            }),
             logout: () => {
                 // Clear localStorage tokens
                 if (typeof window !== 'undefined') {
