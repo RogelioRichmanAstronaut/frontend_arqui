@@ -48,7 +48,17 @@ export const useAuthStore = create<AuthStore>()(
             },
             hasCompleteProfile: () => {
                 const user = get().user;
-                return !!(user?.names && user?.country && user?.phone && user?.idNumber);
+                if (!user) {
+                    return false;
+                }
+
+                const hasCoreInfo =
+                    Boolean(user.names?.trim()) &&
+                    Boolean(user.phone?.trim()) &&
+                    Boolean(user.idNumber?.trim());
+
+                // Country is optional because the backend profile may not expose it yet.
+                return hasCoreInfo;
             },
         }),
         {
