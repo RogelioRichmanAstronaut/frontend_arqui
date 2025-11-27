@@ -6,5 +6,5 @@ export const reservations = {
   create: (dto: CreateReservationDto) => apiClient<ReservationDto>('/reservations', { method: 'POST', body: dto }),
   get: (id: string) => apiClient<ReservationDto>(`/reservations/${id}`, { method: 'GET' }),
   listByClient: (clientUuid: string) => apiClient<ReservationDto[]>(`/reservations?clientUuid=${encodeURIComponent(clientUuid)}`, { method: 'GET' }),
-  cancel: (id: string) => apiClient(`/reservations/${id}/cancel`, { method: 'PATCH' }),
+  cancel: (id: string, reason?: string) => apiClient(`/reservations/${id}/cancel`, { method: 'PATCH', body: reason ? { reason } : undefined }),
 };

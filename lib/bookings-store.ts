@@ -11,7 +11,7 @@ export interface Booking {
     checkIn: string;
     checkOut: string;
     totalPrice: number;
-    status: 'confirmed' | 'cancelled' | 'completed';
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
 }
 
 export interface FlightBooking {
@@ -25,7 +25,7 @@ export interface FlightBooking {
     returnDate: string | null;
     passengers: number;
     totalPrice: number;
-    status: 'confirmed' | 'cancelled' | 'completed';
+    status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
 }
 
 interface BookingsStore {
@@ -35,6 +35,8 @@ interface BookingsStore {
     addFlightBooking: (booking: FlightBooking) => void;
     cancelBooking: (id: string) => void;
     cancelFlightBooking: (id: string) => void;
+    removeBooking: (id: string) => void;
+    removeFlightBooking: (id: string) => void;
 }
 
 export const useBookingsStore = create<BookingsStore>()(
@@ -49,6 +51,12 @@ export const useBookingsStore = create<BookingsStore>()(
             })),
             cancelFlightBooking: (id) => set((state) => ({
                 flightBookings: state.flightBookings.map(b => b.id === id ? { ...b, status: 'cancelled' } : b)
+            })),
+            removeBooking: (id) => set((state) => ({
+                bookings: state.bookings.filter(b => b.id !== id)
+            })),
+            removeFlightBooking: (id) => set((state) => ({
+                flightBookings: state.flightBookings.filter(b => b.id !== id)
             })),
         }),
         {

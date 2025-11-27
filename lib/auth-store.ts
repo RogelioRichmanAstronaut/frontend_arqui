@@ -2,11 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface User {
+    id?: string;
     email: string;
     names?: string;
     country?: string;
     phone?: string;
     idNumber?: string;
+    role?: 'ADMIN' | 'EMPLOYEE';
 }
 
 interface AuthStore {

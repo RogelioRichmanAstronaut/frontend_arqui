@@ -36,11 +36,16 @@ export default function CompleteProfilePage() {
                     }
                     
                     // Actualizar el estado local con los datos del backend
+                    // Extraer tipo y número de documento del clientId (formato: TIPO-NUMERO)
+                    const clientIdParts = client.clientId?.split('-') || [];
+                    const idType = clientIdParts[0] || 'CC';
+                    const idNumber = clientIdParts.slice(1).join('-') || '';
+                    
                     updateUser({
                         names: client.name,
                         phone: client.phone,
-                        idNumber: client.clientId?.replace('CC-', '') || '',
-                        country: '', // Agregar country vacío para completar el perfil
+                        idNumber,
+                        country: '',
                     });
                     router.push('/profile');
                     return;
@@ -59,10 +64,18 @@ export default function CompleteProfilePage() {
         names: "",
         country: "",
         phone: "",
+        idType: "CC", // CC, CE, NIT, PAS
         idNumber: "",
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const documentTypes = [
+        { value: "CC", label: t("Cédula de Ciudadanía", "Citizenship ID") },
+        { value: "CE", label: t("Cédula de Extranjería", "Foreign ID") },
+        { value: "NIT", label: t("NIT", "Tax ID") },
+        { value: "PAS", label: t("Pasaporte", "Passport") },
+    ];
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value });
     };
 
@@ -78,7 +91,7 @@ export default function CompleteProfilePage() {
         console.log('📝 Enviando formulario:', formData);
         
         try {
-            const newClientId = `CC-${formData.idNumber}`;
+            const newClientId = `${formData.idType}-${formData.idNumber}`;
             
             // Intentar obtener el cliente existente usando /clients/me
             let existingClient = null;
@@ -190,7 +203,20 @@ export default function CompleteProfilePage() {
                             <Input id="phone" value={formData.phone} onChange={handleChange} placeholder="+57 300 123 4567" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="idNumber">{t("Número de Cédula", "ID Number")}</Label>
+                            <Label htmlFor="idType">{t("Tipo de Documento", "Document Type")}</Label>
+                            <select
+                                id="idType"
+                                value={formData.idType}
+                                onChange={handleChange}
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {documentTypes.map(dt => (
+                                    <option key={dt.value} value={dt.value}>{dt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="idNumber">{t("Número de Documento", "Document Number")}</Label>
                             <Input id="idNumber" value={formData.idNumber} onChange={handleChange} placeholder="1234567890" />
                         </div>
                     </CardContent>

@@ -10,7 +10,8 @@ import { Label } from "@/components/(ui)/label";
 import { Separator } from "@/components/(ui)/separator";
 import { toast } from "sonner";
 import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
-import { useMyClient, useUpdateMyClient } from "@/lib/hooks/useProfile";
+import { useMyClient, useUpdateMyClient, useDeleteClient } from "@/lib/hooks/useProfile";
+import { AlertTriangle, Trash2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,25 @@ function ProfileContent() {
 
     // Usar el nuevo hook que actualiza el cliente autenticado directamente
     const updateClientMutation = useUpdateMyClient();
+    const deleteClientMutation = useDeleteClient();
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const handleDeleteAccount = async () => {
+        if (!clientData?.id) {
+            toast.error(t("No se encontró el cliente", "Client not found"));
+            return;
+        }
+        try {
+            await deleteClientMutation.mutateAsync(clientData.id);
+            toast.success(t("Cuenta eliminada correctamente", "Account deleted successfully"));
+            // Logout and redirect
+            const { logout } = useAuthStore.getState();
+            logout();
+            router.push('/');
+        } catch (error: any) {
+            toast.error(error?.message || t("Error al eliminar cuenta", "Error deleting account"));
+        }
+    };
 
     const [formData, setFormData] = useState({
         names: "",
@@ -190,6 +210,60 @@ function ProfileContent() {
                     <p className="mt-2 text-sm text-gray-500">{t("Cargando perfil...", "Loading profile...")}</p>
                 </div>
             )}
+
+            {/* Danger Zone - Delete Account */}
+            <Separator className="my-8" />
+            
+            <div className="space-y-4">
+                <div className="flex items-center gap-2 text-red-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    <h4 className="text-lg font-semibold">{t("Zona de Peligro", "Danger Zone")}</h4>
+                </div>
+                <p className="text-sm text-gray-600">
+                    {t(
+                        "Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, ten certeza.",
+                        "Once you delete your account, there is no going back. Please be certain."
+                    )}
+                </p>
+                
+                {!showDeleteConfirm ? (
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {t("Eliminar mi cuenta", "Delete my account")}
+                    </Button>
+                ) : (
+                    <div className="p-4 border border-red-200 bg-red-50 rounded-lg space-y-4">
+                        <p className="text-sm font-medium text-red-800">
+                            {t(
+                                "¿Estás seguro de que deseas eliminar tu cuenta? Esta acción es irreversible.",
+                                "Are you sure you want to delete your account? This action is irreversible."
+                            )}
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowDeleteConfirm(false)}
+                            >
+                                {t("Cancelar", "Cancel")}
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={handleDeleteAccount}
+                                disabled={deleteClientMutation.isPending}
+                                className="bg-red-600 hover:bg-red-700"
+                            >
+                                {deleteClientMutation.isPending 
+                                    ? t("Eliminando...", "Deleting...") 
+                                    : t("Sí, eliminar mi cuenta", "Yes, delete my account")}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

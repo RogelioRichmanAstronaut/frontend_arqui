@@ -37,8 +37,13 @@ export const useFlightsStore = create<FlightsStore>((set) => ({
   setClassType: (classType) => set({ classType }),
   initializeFromReservation: (data) =>
     set({
+      // Destino = donde está el hotel (usuario VUELA HACIA allá)
       destination: data.destination,
+      // Origen = vacío, usuario debe elegir de dónde sale
+      origin: '',
+      // Fecha salida = día del check-in (llegar al hotel)
       departureDate: data.checkIn,
+      // Fecha regreso = día del check-out (volver a casa)
       returnDate: data.checkOut,
       passengers: data.adults,
     }),

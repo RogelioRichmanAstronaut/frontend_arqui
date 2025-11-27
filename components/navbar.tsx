@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Menu, User, LogOut } from "lucide-react"
+import { Menu, User, LogOut, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/(ui)/button"
 import {
   DropdownMenu,
@@ -92,6 +92,15 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Cart Icon */}
+            {isAuthenticated && (
+              <Link href="/cart">
+                <Button variant="ghost" size="icon" className="hidden md:flex">
+                  <ShoppingCart className={`h-5 w-5 ${pathname === '/cart' ? 'text-[#00C2A8]' : 'text-[#0A2540]'}`} />
+                </Button>
+              </Link>
+            )}
+
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -163,6 +172,15 @@ export function Navbar({ locale, onLocaleChange }: NavbarProps) {
                   <div className="border-t pt-4">
                     {isAuthenticated ? (
                       <div className="flex flex-col gap-2">
+                        <Link href="/cart" onClick={() => setIsOpen(false)}>
+                          <Button
+                            variant="ghost"
+                            className={`w-full justify-start gap-2 ${pathname === '/cart' ? 'text-[#00C2A8] bg-[#00C2A8]/10' : ''}`}
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                            {locale === "es" ? "Carrito" : "Cart"}
+                          </Button>
+                        </Link>
                         <Link href="/profile" onClick={() => setIsOpen(false)}>
                           <Button
                             variant="ghost"

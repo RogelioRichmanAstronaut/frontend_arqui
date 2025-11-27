@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
+import { bookings } from '../api/bookings';
+import type { HotelSearchRequest as BackendHotelSearchRequest } from '../api/bookings';
 
 export type HotelSearchRequest = {
   destination: string;
@@ -7,6 +8,7 @@ export type HotelSearchRequest = {
   checkOut: string;
   adults: number;
   children?: number;
+  rooms?: number;
 };
 
 export type HotelResult = {
@@ -26,59 +28,67 @@ export type HotelResult = {
   }>;
 };
 
+// Extraer código de ciudad del formato "BOG - Bogotá" o "CO-BOG"
+function extractCityId(destination: string): string | undefined {
+  if (!destination || destination.trim() === '') {
+    return undefined; // Sin destino = buscar todos los hoteles
+  }
+  
+  // Si ya es formato ISO (CO-BOG)
+  if (destination.match(/^[A-Z]{2}-[A-Z]{3}$/)) {
+    return destination;
+  }
+  
+  // Si es formato "BOG - Bogotá" o solo "BOG"
+  const iataMatch = destination.match(/^([A-Z]{3})(?:\s*-|$)/i);
+  if (iataMatch) {
+    return `CO-${iataMatch[1].toUpperCase()}`;
+  }
+  
+  // Mapeo de nombres de ciudad a códigos
+  const cityMap: Record<string, string> = {
+    'bogota': 'CO-BOG', 'bogotá': 'CO-BOG',
+    'medellin': 'CO-MDE', 'medellín': 'CO-MDE',
+    'cartagena': 'CO-CTG', 'cali': 'CO-CLO',
+    'barranquilla': 'CO-BAQ', 'santa marta': 'CO-SMR',
+  };
+  
+  const normalized = destination.toLowerCase().split('-')[0].trim();
+  return cityMap[normalized] || undefined;
+}
+
 export function useHotelSearch(params: HotelSearchRequest, enabled: boolean = false) {
   return useQuery({
     queryKey: ['hotels', 'search', params],
     queryFn: async () => {
-      // El backend espera cityId en formato CO-BOG y rooms (número de habitaciones)
-      // Necesitamos convertir el destination a cityId
-      // Por ahora, asumimos que destination puede ser un nombre de ciudad o código
-      // En producción, esto debería usar el catálogo de ciudades
-      const cityId = params.destination.startsWith('CO-') 
-        ? params.destination 
-        : `CO-${params.destination.toUpperCase().substring(0, 3)}`;
+      // ciudad_destino es OPCIONAL según docs.txt
+      const cityId = extractCityId(params.destination);
 
-      const backendParams = {
-        cityId,
+      const backendParams: BackendHotelSearchRequest = {
+        cityId: cityId || '', // Vacío = buscar todos (opcional según docs)
         checkIn: params.checkIn,
         checkOut: params.checkOut,
         adults: params.adults,
-        rooms: 1, // Por defecto 1 habitación, puede ajustarse según necesidad
+        rooms: params.rooms || 1,
       };
 
-      const response = await apiClient<{
-        hotelId: string;
-        name: string;
-        cityId: string;
-        amenities: string[];
-        roomTypes: Array<{
-          roomType: string;
-          priceTotal: number;
-          currency: string;
-        }>;
-      }>('/bookings/hotels/search', {
-        method: 'POST',
-        body: backendParams,
-        authToken: typeof window !== 'undefined' ? localStorage.getItem('auth_token') || undefined : undefined,
-      });
+      const response = await bookings.hotels.search(backendParams);
 
       // Transformar respuesta del backend al formato que espera el frontend
-      // Nota: El backend actualmente devuelve un solo hotel, pero el frontend espera un array
-      // Por ahora, convertimos la respuesta única en un array
       const hotel: HotelResult = {
         hotelId: response.hotelId,
         name: response.name,
-        stars: 3, // El backend no devuelve estrellas, usar valor por defecto
-        city: response.cityId.split('-').pop() || response.cityId,
-        country: response.cityId.split('-')[0] || 'CO',
-        images: [], // El backend no devuelve imágenes en la búsqueda
+        stars: response.stars || 3,
+        city: response.cityId || 'Bogotá',
+        country: 'CO',
+        images: response.photos || [],
         amenities: response.amenities || [],
-        rooms: response.roomTypes.map((rt, index) => ({
-          roomId: `${response.hotelId}-room-${index}`,
+        rooms: (response.roomTypes || []).map((rt) => ({
+          roomId: rt.roomId || rt.roomCode,
           type: rt.roomType,
           price: rt.priceTotal,
-          available: true,
-          includesBreakfast: false, // El backend no devuelve esta información
+          available: rt.available !== false,
+          includesBreakfast: false,
         })),
       };
 

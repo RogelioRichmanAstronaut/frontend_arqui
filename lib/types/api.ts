@@ -68,13 +68,35 @@ export type CheckoutConfirmResponseDto = {
 };
 
 // Payments
-export type PaymentInitiateRequestDto = CheckoutConfirmRequestDto;
-export type PaymentInitiateResponseDto = CheckoutConfirmResponseDto;
-export type PaymentStatusQuery = { reservationId?: string; orderId?: string; paymentAttemptId?: string };
+export type PaymentInitiateRequestDto = {
+  clientId: string;
+  clientName?: string;
+  totalAmount: number;
+  currency: string;
+  description?: string;
+  returnUrl?: string;
+  callbackUrl?: string;
+  reservationId?: string;
+};
+export type PaymentInitiateResponseDto = {
+  paymentAttemptId: string;
+  bankPaymentUrl?: string;
+  totalAmount: number;
+  expiresAt?: string;
+  state?: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+  reservationId?: string;
+  url_respuesta?: string;
+};
+export type PaymentStatusQuery = { reservationId?: string; orderId?: string; paymentAttemptId?: string; transactionId?: string };
 
 // Reservations
 export type CreateReservationDto = { clientUuid: string; currency: string; totalAmount: number; note?: string };
 export type ReservationDto = { id: string; clientUuid: string; currency: string; totalAmount: number; status: string; createdAt: string };
 
 // Catalog
-export type CityDto = { id: string; name: string; country?: string };
+export type CityDto = { 
+  id: string;        // CO-BOG (ISO 3166-2)
+  name: string;      // Bogotá
+  iataCode?: string; // BOG
+  country?: string;  // Colombia
+};

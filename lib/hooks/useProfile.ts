@@ -54,3 +54,14 @@ export function useClientReservations(clientUuid: string) {
     enabled: !!clientUuid,
   });
 }
+
+export function useDeleteClient() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (clientId: string) => clients.remove(clientId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+}

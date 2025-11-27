@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { User, Calendar, Bell } from "lucide-react";
+import { User, Calendar, Bell, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguageStore } from "@/lib/store";
 import { useAuthStore } from "@/lib/auth-store";
@@ -72,7 +72,9 @@ export default function ProfileLayout({
     children: React.ReactNode;
 }) {
     const { locale } = useLanguageStore();
+    const { user } = useAuthStore();
     const t = (es: string, en: string) => (locale === "es" ? es : en);
+    const isAdmin = user?.role === 'ADMIN';
 
     const sidebarNavItems = [
         {
@@ -90,6 +92,12 @@ export default function ProfileLayout({
             href: "/profile/notifications",
             icon: <Bell className="h-5 w-5" />,
         },
+        // Admin-only link
+        ...(isAdmin ? [{
+            title: t("Reportes", "Reports"),
+            href: "/admin/reports",
+            icon: <BarChart3 className="h-5 w-5" />,
+        }] : []),
     ];
 
     return (

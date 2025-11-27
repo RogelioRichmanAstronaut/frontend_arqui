@@ -29,8 +29,8 @@ export function useCreateReservation() {
 
 export function useCancelReservation() {
   const qc = useQueryClient();
-  return useMutation<void, Error, string, unknown>({
-    mutationFn: (id: string) => reservations.cancel(id),
+  return useMutation<void, Error, { id: string; reason?: string }, unknown>({
+    mutationFn: ({ id, reason }) => reservations.cancel(id, reason),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['reservations'] }),
   });
 }

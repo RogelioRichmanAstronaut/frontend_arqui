@@ -20,7 +20,6 @@ import type {
 } from "@/lib/types/packages";
 
 import { usePackageSearchStore } from "@/lib/package-search-store";
-import { allPackages } from "@/lib/data/packages";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useHotelSearch } from "@/lib/hooks/useHotels";
 import { toast } from "sonner";
@@ -70,13 +69,6 @@ function PackagesContent() {
     }
   }, []);
 
-  const normalizeText = (text: string) => {
-    return text
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  };
-
   // Use API hotels if available, otherwise fallback to mock data only if no search has been performed
   const packagesFromApi = (apiHotels && apiHotels.length > 0) ? apiHotels.map((hotel): Package => {
     // Get first image from images array or use default
@@ -119,51 +111,15 @@ function PackagesContent() {
     };
   }) : [];
 
-  // Add imageUrl to mock packages if not present
-  // Solo usar mocks si no hay datos de API y no se ha realizado una búsqueda
-  const packagesWithImages = packagesFromApi.length > 0 
-    ? packagesFromApi 
-    : (!shouldSearch ? allPackages.map(pkg => ({
-        ...pkg,
-        imageUrl: pkg.imageUrl || pkg.hotel?.fotos?.[0] || '/images/cards/default-hotel.jpg'
-      })) : []);
+  // Solo mostrar datos reales de la API, no mocks
+  const packagesWithImages = packagesFromApi;
 
+  // El backend ya filtra por ciudad, solo filtramos por hotel si hay hotelFilter
   const packagesToDisplay = packagesWithImages.filter((pkg) => {
     if (hotelFilter) {
       return pkg.hotel?.hotel_id === hotelFilter;
     }
-    if (!destination) return true;
-
-    const normalizedDest = normalizeText(destination);
-    const normalizedCity = normalizeText(pkg.hotel?.ciudad || "");
-    const normalizedCountry = normalizeText(pkg.hotel?.pais || "");
-
-
-    let searchCountry = "";
-    let searchCity = normalizedDest;
-
-    if (normalizedDest.includes(",")) {
-      const parts = normalizedDest.split(",").map(p => p.trim());
-      if (parts.length >= 2) {
-        searchCountry = parts[0];
-        searchCity = parts[1];
-      }
-    } else {
-      if (normalizedCountry.includes(normalizedDest) || normalizedDest.includes(normalizedCountry)) {
-        return true;
-      }
-    }
-    if (searchCountry && searchCity) {
-      const countryMatches = normalizedCountry.includes(searchCountry) || searchCountry.includes(normalizedCountry);
-      const cityMatches = normalizedCity.includes(searchCity) || searchCity.includes(normalizedCity);
-      return countryMatches && cityMatches;
-    }
-    return (
-      normalizedCity.includes(searchCity) ||
-      searchCity.includes(normalizedCity) ||
-      normalizedDest.includes(normalizedCity) ||
-      normalizedCity.includes(normalizedDest)
-    );
+    return true; // El backend ya devuelve solo hoteles de la ciudad buscada
   });
 
   const {
@@ -266,12 +222,27 @@ function PackagesContent() {
               </div>
             ) : filteredPackages.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">
-                  {t(
-                    "No se encontraron paquetes con los filtros seleccionados",
-                    "No packages found with the selected filters"
-                  )}
-                </p>
+                {!shouldSearch ? (
+                  <>
+                    <div className="text-6xl mb-4">🔍</div>
+                    <p className="text-gray-600 text-xl font-medium mb-2">
+                      {t("Busca tu próximo destino", "Search for your next destination")}
+                    </p>
+                    <p className="text-gray-400">
+                      {t(
+                        "Usa el buscador para encontrar hoteles y vuelos disponibles",
+                        "Use the search bar to find available hotels and flights"
+                      )}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-gray-500 text-lg">
+                    {t(
+                      "No se encontraron paquetes con los filtros seleccionados",
+                      "No packages found with the selected filters"
+                    )}
+                  </p>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

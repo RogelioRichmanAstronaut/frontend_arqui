@@ -13,10 +13,11 @@ import { useBookingsStore } from "@/lib/bookings-store";
 import { useNotificationsStore } from "@/lib/notifications-store";
 import { usePaymentStore } from "@/lib/payment-store";
 import { useAuthStore } from "@/lib/auth-store";
-// import { useAddCartItem } from "@/lib/hooks/useCart"; // Deshabilitado: servicios externos
-// import { useCheckoutQuote } from "@/lib/hooks/useCheckout"; // Deshabilitado: servicios externos
+import { useAddCartItem } from "@/lib/hooks/useCart";
+import { useCheckoutQuote } from "@/lib/hooks/useCheckout";
 import { v4 as uuidv4 } from 'uuid';
 import { useLanguageStore } from "@/lib/store";
+import { toast } from "sonner";
 import type { Flight, FlightClass } from "@/components/(flights)/flight-card";
 
 const formatDate = (iso: string | null) => {
@@ -90,13 +91,13 @@ export default function FlightsConfirmPage() {
   const { addNotification } = useNotificationsStore();
   const { setPaymentInfo } = usePaymentStore();
   const { clientId } = useAuthStore();
-  // const addCartItem = useAddCartItem(); // Deshabilitado: servicios externos
+  const addCartItem = useAddCartItem();
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
   // Use checkout quote if available to get real total
-  // const checkoutQuoteDto = clientId ? { clientId } : undefined;
-  // const { data: quoteData } = useCheckoutQuote(checkoutQuoteDto); // Deshabilitado: servicios externos
+  const checkoutQuoteDto = clientId ? { clientId } : undefined;
+  const { data: quoteData } = useCheckoutQuote(checkoutQuoteDto);
 
   useEffect(() => {
     if (!flight && !hasRedirected.current && !isConfirming.current) {
@@ -158,13 +159,32 @@ export default function FlightsConfirmPage() {
       // Calculate flight total
       const flightTotal = selectedClasses.reduce((acc, cls) => acc + cls.price, 0);
 
-      // TODO: Integración futura con backend de carrito cuando los servicios externos estén listos
-      console.log('✈️ Guardando vuelo localmente (servicios externos pendientes):', {
-        flightId: flight.flightId,
-        origin: searchDetails.origin,
-        destination: searchDetails.destination,
-        totalPrice: flightTotal
-      });
+      // Agregar vuelo al carrito via backend
+      try {
+        await addCartItem.mutateAsync({
+          clientId: clientId,
+          currency: 'COP',
+          kind: 'AIR',
+          refId: flight.flightId,
+          quantity: searchDetails.passengers,
+          price: flightTotal,
+          metadata: {
+            flightId: flight.flightId,
+            passengers: Array.from({ length: searchDetails.passengers }, (_, i) => ({
+              name: `Pasajero ${i + 1}`,
+              doc: clientId
+            })),
+            originCityId: searchDetails.origin.startsWith('CO-') ? searchDetails.origin : `CO-${searchDetails.origin}`,
+            destinationCityId: searchDetails.destination.startsWith('CO-') ? searchDetails.destination : `CO-${searchDetails.destination}`,
+            departureAt: searchDetails.departureDate,
+            airline: flight.airline,
+          }
+        });
+        toast.success(t('Vuelo agregado al carrito', 'Flight added to cart'));
+      } catch (cartError: any) {
+        console.error('Error agregando al carrito:', cartError);
+        toast.warning(t('Guardado localmente (backend no disponible)', 'Saved locally (backend unavailable)'));
+      }
 
       // Calculate package total if package reservation exists
       let packageTotal = 0;

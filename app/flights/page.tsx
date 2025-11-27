@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { MapPin, Users, Search } from "lucide-react"
+import { Users, Search } from "lucide-react"
 import { Button } from "@/components/(ui)/button"
 import { Input } from "@/components/(ui)/input"
 import { Card, CardContent } from "@/components/(ui)/card"
@@ -18,7 +18,7 @@ import { BannerSection } from "@/components/banner-section"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useFlightSearch } from "@/lib/hooks/useFlights"
 import { toast } from "sonner"
-import { originCities } from "@/lib/origin-cities"
+import { CitySelect } from "@/components/city-select"
 
 const queryClient = new QueryClient()
 
@@ -53,9 +53,6 @@ function FlightSearchContent() {
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null)
   const [shouldSearch, setShouldSearch] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [filteredOrigins, setFilteredOrigins] = useState<string[]>([])
-  const [showOriginSuggestions, setShowOriginSuggestions] = useState(false)
-  const originInputRef = useRef<HTMLDivElement>(null)
 
   const { data: apiFlights, isLoading, error } = useFlightSearch({
     origin: origin || 'BOG',
@@ -97,238 +94,33 @@ function FlightSearchContent() {
     }
   }, [packageCheckIn, packageCheckOut, departureDate, returnDate, setDepartureDate, setReturnDate])
 
-  // Extract airport code from origin (format: "BOG - Bogotá" -> "BOG")
-  const getAirportCode = (value: string): string => {
-    if (!value) return ""
-    const parts = value.split(" - ")
-    return parts.length > 0 ? parts[0].trim() : value
-  }
-
-  // Validate that origin and destination are different
-  const validateOriginDestination = () => {
-    const originCode = getAirportCode(origin)
-    const destinationCode = getAirportCode(destination)
-
-    if (originCode && destinationCode && originCode === destinationCode) {
-      setValidationError(
-        t(
-          "El origen y el destino no pueden ser el mismo",
-          "Origin and destination cannot be the same"
-        )
-      )
-      return false
-    }
-
-    setValidationError(null)
-    return true
-  }
-
-  // Mock flights - solo se usan como fallback cuando no hay datos de la API y no se ha realizado búsqueda
-  const mockFlights: Flight[] = [
-    {
-      flightId: "FL-001",
-      airline: "LATAM Airlines",
-      origin: getAirportCode(origin) || "BOG",
-      destination: getAirportCode(destination) || "MDE",
-      departureTime: "08:00",
-      arrivalTime: "09:30",
-      duration: "1h 30m",
-      classes: [
-        {
-          classId: "ECON-001",
-          className: t("Económica", "Economy"),
-          price: 350000,
-          available: true,
-        },
-        {
-          classId: "VIP-001",
-          className: "VIP",
-          price: 850000,
-          available: true,
-        },
-      ],
-    },
-    {
-      flightId: "FL-002",
-      airline: "Avianca",
-      origin: getAirportCode(origin) || "BOG",
-      destination: getAirportCode(destination) || "MDE",
-      departureTime: "12:15",
-      arrivalTime: "13:45",
-      duration: "1h 30m",
-      classes: [
-        {
-          classId: "ECON-002",
-          className: t("Económica", "Economy"),
-          price: 380000,
-          available: true,
-        },
-        {
-          classId: "VIP-002",
-          className: "VIP",
-          price: 920000,
-          available: true,
-        },
-      ],
-    },
-    {
-      flightId: "FL-003",
-      airline: "Viva Air",
-      origin: getAirportCode(origin) || "BOG",
-      destination: getAirportCode(destination) || "MDE",
-      departureTime: "16:30",
-      arrivalTime: "18:00",
-      duration: "1h 30m",
-      classes: [
-        {
-          classId: "ECON-003",
-          className: t("Económica", "Economy"),
-          price: 320000,
-          available: true,
-        },
-        {
-          classId: "VIP-003",
-          className: "VIP",
-          price: 780000,
-          available: true,
-        },
-      ],
-    },
-    {
-      flightId: "FL-004",
-      airline: "Copa Airlines",
-      origin: getAirportCode(origin) || "BOG",
-      destination: getAirportCode(destination) || "MDE",
-      departureTime: "20:00",
-      arrivalTime: "21:30",
-      duration: "1h 30m",
-      classes: [
-        {
-          classId: "ECON-004",
-          className: t("Económica", "Economy"),
-          price: 410000,
-          available: true,
-        },
-        {
-          classId: "VIP-004",
-          className: "VIP",
-          price: 950000,
-          available: true,
-        },
-      ],
-    },
-    {
-      flightId: "FL-005",
-      airline: "LATAM Airlines",
-      origin: getAirportCode(origin) || "BOG",
-      destination: getAirportCode(destination) || "MDE",
-      departureTime: "06:45",
-      arrivalTime: "08:15",
-      duration: "1h 30m",
-      classes: [
-        {
-          classId: "ECON-005",
-          className: t("Económica", "Economy"),
-          price: 340000,
-          available: true,
-        },
-        {
-          classId: "VIP-005",
-          className: "VIP",
-          price: 820000,
-          available: true,
-        },
-      ],
-    },
-    {
-      flightId: "FL-006",
-      airline: "Avianca",
-      origin: getAirportCode(origin) || "BOG",
-      destination: getAirportCode(destination) || "MDE",
-      departureTime: "14:20",
-      arrivalTime: "15:50",
-      duration: "1h 30m",
-      classes: [
-        {
-          classId: "ECON-006",
-          className: t("Económica", "Economy"),
-          price: 370000,
-          available: true,
-        },
-        {
-          classId: "VIP-006",
-          className: "VIP",
-          price: 890000,
-          available: true,
-        },
-      ],
-    },
-  ]
-
-  // Determinar qué vuelos mostrar: priorizar datos de API, usar mocks solo si no hay búsqueda activa
-  const flightsToDisplay = (apiFlights && apiFlights.length > 0) 
-    ? apiFlights 
-    : (!shouldSearch ? mockFlights : [])
+  // Solo mostrar datos reales de la API
+  const flightsToDisplay = apiFlights || []
 
   const handleFlightSelect = (flight: Flight, selectedClass?: FlightClass) => {
-    // Abrir el modal con los detalles del vuelo
     setSelectedFlight(flight)
   }
 
-  const handleOriginChange = (value: string) => {
-    setOrigin(value)
-
-    if (value.length > 0) {
-      const term = value.toLowerCase()
-      const filtered = originCities.filter((city) =>
-        city.toLowerCase().includes(term)
-      )
-      setFilteredOrigins(filtered)
-      setShowOriginSuggestions(true)
-    } else {
-      setShowOriginSuggestions(false)
+  // Validar origen y destino
+  const validateSearch = () => {
+    if (!origin) {
+      setValidationError(t("Selecciona una ciudad de origen", "Select an origin city"))
+      return false
     }
-
-    // Validate after a short delay to allow selection
-    setTimeout(() => {
-      validateOriginDestination()
-    }, 100)
-  }
-
-  const handleSelectOrigin = (city: string) => {
-    // Store the full city name for display, but extract code for flight data
-    setOrigin(city)
-    setShowOriginSuggestions(false)
-    // Validate after selection
-    setTimeout(() => {
-      validateOriginDestination()
-    }, 100)
-  }
-
-  const handleDestinationChange = (value: string) => {
-    setDestination(value)
-    // Validate after a short delay
-    setTimeout(() => {
-      validateOriginDestination()
-    }, 100)
-  }
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        originInputRef.current &&
-        !originInputRef.current.contains(event.target as Node)
-      ) {
-        setShowOriginSuggestions(false)
-      }
+    if (!destination) {
+      setValidationError(t("Selecciona una ciudad de destino", "Select a destination city"))
+      return false
     }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+    // Extraer códigos para comparar
+    const originCode = origin.split('-').pop()?.split(' ')[0] || origin
+    const destCode = destination.split('-').pop()?.split(' ')[0] || destination
+    if (originCode === destCode) {
+      setValidationError(t("El origen y destino no pueden ser el mismo", "Origin and destination cannot be the same"))
+      return false
     }
-  }, [])
+    setValidationError(null)
+    return true
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -339,85 +131,128 @@ function FlightSearchContent() {
       </BannerSection>
 
       <section className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
+        {/* Banner informativo cuando hay hotel seleccionado */}
+        {searchDetails?.destination && (
+          <div className="mb-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-2xl">🏨✈️</span>
+              <div>
+                <p className="text-green-800 font-medium">
+                  {t("Hotel seleccionado - Solo falta el origen", "Hotel selected - Just pick your origin")}
+                </p>
+                <p className="text-green-600 text-sm">
+                  {t("Los demás datos vienen de tu reserva de hotel", "Other data comes from your hotel booking")}
+                </p>
+              </div>
+            </div>
+            {/* Resumen de datos bloqueados */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm bg-white/50 rounded-lg p-3">
+              <div>
+                <span className="text-gray-500">📍 {t("Destino:", "Destination:")}</span>
+                <span className="ml-1 font-medium text-green-700">{destination}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">📅 {t("Llegada:", "Arrival:")}</span>
+                <span className="ml-1 font-medium text-green-700">{departureDate || '-'}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">📅 {t("Regreso:", "Return:")}</span>
+                <span className="ml-1 font-medium text-green-700">{returnDate || '-'}</span>
+              </div>
+              <div>
+                <span className="text-gray-500">👥 {t("Pasajeros:", "Passengers:")}</span>
+                <span className="ml-1 font-medium text-green-700">{passengers}</span>
+              </div>
+            </div>
+          </div>
+        )}
         <Card className="shadow-2xl">
           <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="relative z-50" ref={originInputRef}>
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 z-10" />
-                <Input 
-                  placeholder={t("Origen", "Origin")} 
-                  className="pl-10 h-12"
+            {/* Si hay hotel, solo mostrar selector de origen */}
+            {searchDetails?.destination ? (
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t("¿Desde dónde viajas?", "Where are you traveling from?")} *
+                  </label>
+                  <CitySelect
+                    value={origin}
+                    onChange={(value) => {
+                      setOrigin(value)
+                      setValidationError(null)
+                    }}
+                    placeholder={t("Selecciona tu ciudad de origen", "Select your origin city")}
+                    className="z-50"
+                  />
+                </div>
+                <Button 
+                  className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12 px-8"
+                  onClick={() => {
+                    if (!validateSearch()) return
+                    setShouldSearch(true)
+                  }}
+                  disabled={isLoading || !origin}
+                >
+                  <Search className="h-5 w-5 mr-2" />
+                  {isLoading ? t("Buscando...", "Searching...") : t("Buscar vuelos", "Search flights")}
+                </Button>
+              </div>
+            ) : (
+              /* Sin hotel: mostrar todos los campos */
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <CitySelect
                   value={origin}
-                  onChange={(e) => handleOriginChange(e.target.value)}
-                  onFocus={() => {
-                    if (origin) {
-                      handleOriginChange(origin)
-                    }
+                  onChange={(value) => {
+                    setOrigin(value)
+                    setValidationError(null)
                   }}
-                  onBlur={() => {
-                    // Delay to allow click on suggestion
-                    setTimeout(() => setShowOriginSuggestions(false), 200)
-                  }}
+                  placeholder={t("¿De dónde sales?", "Where are you leaving from?")}
+                  className="z-50"
                 />
-                {showOriginSuggestions && filteredOrigins.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
-                    <div className="py-2">
-                      <div className="px-4 py-1 text-xs font-semibold text-gray-500 uppercase bg-gray-50">
-                        {t("Orígenes", "Origins")}
-                      </div>
-                      {filteredOrigins.map((city, index) => (
-                        <div
-                          key={`origin-${index}`}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-700 flex items-center gap-2"
-                          onClick={() => handleSelectOrigin(city)}
-                        >
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {city}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input 
-                  placeholder={t("Destino", "Destination")} 
-                  className="pl-10 h-12"
+                <CitySelect
                   value={destination}
-                  onChange={(e) => handleDestinationChange(e.target.value)}
+                  onChange={(value) => {
+                    setDestination(value)
+                    setValidationError(null)
+                  }}
+                  placeholder={t("¿A dónde vas?", "Where are you going?")}
+                  className="z-40"
                 />
+                <div className="relative">
+                  <DateRangePicker
+                    isOpen={activePanel === "dates"}
+                    onToggle={toggleDates}
+                  />
+                  {!departureDate && !returnDate && (
+                    <span className="absolute -bottom-5 left-0 text-xs text-gray-400">
+                      {t("(opcional)", "(optional)")}
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="number"
+                    placeholder={t("# Personas", "# Persons")}
+                    className="pl-10 h-12"
+                    min="1"
+                    value={passengers}
+                    onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+                <Button 
+                  className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12"
+                  onClick={() => {
+                    if (!validateSearch()) return
+                    setShouldSearch(true)
+                  }}
+                  disabled={isLoading}
+                >
+                  <Search className="h-5 w-5 mr-2" />
+                  {isLoading ? t("Buscando...", "Searching...") : t("Buscar vuelos", "Search flights")}
+                </Button>
               </div>
-              <DateRangePicker
-                isOpen={activePanel === "dates"}
-                onToggle={toggleDates}
-              />
-              <div className="relative">
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="number"
-                  placeholder={t("# Personas", "# Persons")}
-                  className="pl-10 h-12"
-                  min="1"
-                  value={passengers}
-                  onChange={(e) => setPassengers(parseInt(e.target.value) || 1)}
-                />
-              </div>
-              <Button 
-                className="bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white h-12"
-                onClick={() => {
-                  if (!origin || !destination) {
-                    toast.error(t("Por favor completa origen y destino", "Please fill origin and destination"))
-                    return
-                  }
-                  setShouldSearch(true)
-                }}
-                disabled={isLoading}
-              >
-                <Search className="h-5 w-5 mr-2" />
-                {isLoading ? t("Buscando...", "Searching...") : t("Encuentra tu vuelo", "Find your flight")}
-              </Button>
-            </div>
+            )}
             {validationError && (
               <div className="mt-4">
                 <Alert variant="destructive">

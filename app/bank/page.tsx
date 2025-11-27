@@ -11,9 +11,7 @@ import { usePaymentStore, type PaymentResponse } from "@/lib/payment-store";
 import { usePackageReservationStore } from "@/lib/package-reservation-store";
 import { useFlightReservationStore } from "@/lib/flight-reservation-store";
 import { useLanguageStore } from "@/lib/store";
-
-// Bank API endpoint - replace with your actual bank API URL
-const BANK_API_URL = process.env.NEXT_PUBLIC_BANK_API_URL || "https://api.bank.com/pagos";
+import { apiClient } from "@/lib/api/client";
 
 const formatCurrency = (amount: number): string => {
   return `$${amount.toLocaleString("es-CO")}`;
@@ -178,42 +176,51 @@ export default function BankPaymentPage() {
     setError(null);
     setCustomerInfo({ customerId, customerName });
 
-    // Build payment payload
+    // Build payment payload para el proxy de backend_arqui
     const payload = {
-      monto_total: totalAmount,
-      descripcion_pago: description,
-      cedula_cliente: customerId,
-      nombre_cliente: customerName,
-      url_respuesta: `${window.location.origin}/bank/response`,
-      url_notificacion: `${window.location.origin}/api/bank/notificacion`,
-      destinatario: "1234567890", // This should come from your backend/config
+      clientId: `CC-${customerId}`,
+      clientName: customerName,
+      totalAmount: totalAmount,
+      currency: "COP",
+      description: description,
+      returnUrl: `${window.location.origin}/bank/response`,
+      callbackUrl: `${window.location.origin}/api/bank/notificacion`,
     };
 
     try {
-      const response = await fetch(BANK_API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
+      // Usar el proxy de backend_arqui en lugar de llamar directo al banco
+      const data = await apiClient<{
+        paymentAttemptId: string;
+        bankPaymentUrl?: string;
+        totalAmount: number;
+        expiresAt?: string;
+        state?: string;
+      }>('/payments/init', {
+        method: 'POST',
+        body: payload,
+        idempotencyKey: `pay-${Date.now()}`,
       });
 
-      if (!response.ok) {
-        throw new Error(t("Error al procesar el pago", "Error processing payment"));
+      // Si el banco devuelve una URL de pago, redirigir
+      if (data.bankPaymentUrl) {
+        window.location.href = data.bankPaymentUrl;
+        return;
       }
 
-      const data: PaymentResponse = await response.json();
-      setPaymentResponse(data);
+      // Si no hay URL, mostrar respuesta directa
+      const paymentResponse: PaymentResponse = {
+        referencia_transaccion: data.paymentAttemptId,
+        estado_transaccion: (data.state as "APROBADA" | "RECHAZADA" | "PENDIENTE") || "PENDIENTE",
+        monto_transaccion: data.totalAmount,
+        fecha_hora_pago: new Date().toISOString(),
+        codigo_respuesta: "00",
+        metodo_pago: "PSE",
+      };
+      setPaymentResponse(paymentResponse);
 
-      if (data.estado_transaccion === "APROBADA") {
-        // Payment successful - you might want to update booking status here
-        // and redirect to success page
-      }
-    } catch (err) {
+    } catch (err: any) {
       setError(
-        err instanceof Error
-          ? err.message
-          : t("Error al comunicarse con el banco", "Error communicating with bank")
+        err?.message || t("Error al comunicarse con el banco", "Error communicating with bank")
       );
     } finally {
       setLoading(false);

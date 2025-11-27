@@ -12,8 +12,9 @@ import { useBookingsStore } from "@/lib/bookings-store";
 import { useNotificationsStore } from "@/lib/notifications-store";
 import { usePaymentStore } from "@/lib/payment-store";
 import { useAuthStore } from "@/lib/auth-store";
-// import { useAddCartItem } from "@/lib/hooks/useCart"; // Deshabilitado: servicios externos
+import { useAddCartItem } from "@/lib/hooks/useCart";
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from "sonner";
 
 
 
@@ -84,7 +85,7 @@ export default function PackagesConfirmPage() {
   const { addNotification } = useNotificationsStore();
   const { setPaymentInfo } = usePaymentStore();
   const { clientId } = useAuthStore();
-  // const addCartItem = useAddCartItem(); // Deshabilitado: requiere servicios externos (Hotel, Banco)
+  const addCartItem = useAddCartItem();
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -201,17 +202,33 @@ export default function PackagesConfirmPage() {
       const nights = calculateNights(searchDetails.checkIn, searchDetails.checkOut);
       const totalEstimated = pricePerNight * nights;
 
-      // TODO: Integración futura con backend de carrito cuando los servicios externos estén listos
-      // Por ahora guardar solo localmente para pruebas de Solución Turismo
-      console.log('📦 Guardando paquete localmente (servicios externos pendientes):', {
-        hotelId: hotel.hotel_id,
-        roomId: finalRooms[0]?.habitacion_id,
-        checkIn: searchDetails.checkIn,
-        checkOut: searchDetails.checkOut,
-        totalPrice: totalEstimated
-      });
+      // Agregar hotel al carrito via backend
+      try {
+        await addCartItem.mutateAsync({
+          clientId: clientId,
+          currency: 'COP',
+          kind: 'HOTEL',
+          refId: hotel.hotel_id,
+          quantity: roomsRequested,
+          price: totalEstimated,
+          metadata: {
+            hotelId: hotel.hotel_id,
+            roomId: finalRooms[0]?.codigo_tipo_habitacion || finalRooms[0]?.habitacion_id || 'doble',
+            checkIn: searchDetails.checkIn?.split('T')[0],
+            checkOut: searchDetails.checkOut?.split('T')[0],
+            hotelName: hotel.nombre,
+            nights,
+            adults: searchDetails.adults,
+          }
+        });
+        toast.success('Hotel agregado al carrito');
+      } catch (cartError: any) {
+        console.error('Error agregando al carrito:', cartError);
+        // Continuar de todos modos - guardar localmente como fallback
+        toast.warning('Guardado localmente (backend no disponible)');
+      }
 
-      // Save booking locally (will be updated to 'confirmed' after payment)
+      // Save booking locally as backup
       addBooking({
         id: uuidv4(),
         date: new Date().toISOString(),
@@ -220,7 +237,7 @@ export default function PackagesConfirmPage() {
         checkIn: searchDetails.checkIn || new Date().toISOString(),
         checkOut: searchDetails.checkOut || new Date().toISOString(),
         totalPrice: totalEstimated,
-        status: 'confirmed'
+        status: 'pending'
       });
 
       isConfirming.current = true;

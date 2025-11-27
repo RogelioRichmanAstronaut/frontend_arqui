@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Plane, Hotel } from "lucide-react";
 import { Card, CardContent } from "@/components/(ui)/card";
 import { Button } from "@/components/(ui)/button";
 import { usePaymentStore, type PaymentResponse } from "@/lib/payment-store";
 import { useLanguageStore } from "@/lib/store";
+import { useAirConfirm, useHotelConfirm } from "@/lib/hooks/useBookings";
+import { useBookingsStore } from "@/lib/bookings-store";
+import { toast } from "sonner";
 
 export default function BankResponsePage() {
   const router = useRouter();
@@ -15,14 +18,68 @@ export default function BankResponsePage() {
   const t = (es: string, en: string) => (locale === "es" ? es : en);
   
   const { setPaymentResponse } = usePaymentStore();
+  const { bookings: localBookings, flightBookings: localFlightBookings } = useBookingsStore();
+  const airConfirm = useAirConfirm();
+  const hotelConfirm = useHotelConfirm();
+  
   const [isProcessing, setIsProcessing] = useState(true);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [response, setResponse] = useState<PaymentResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationStatus, setConfirmationStatus] = useState<{
+    flights: 'pending' | 'success' | 'error';
+    hotels: 'pending' | 'success' | 'error';
+  }>({ flights: 'pending', hotels: 'pending' });
+
+  // Confirm bookings after payment is approved
+  const confirmBookings = async (transactionId: string) => {
+    setIsConfirming(true);
+    
+    // Confirm flights
+    if (localFlightBookings.length > 0) {
+      try {
+        for (const booking of localFlightBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')) {
+          await airConfirm.mutateAsync({
+            flightReservationId: booking.flight.flightId,
+            transactionId,
+          });
+        }
+        setConfirmationStatus(prev => ({ ...prev, flights: 'success' }));
+        toast.success(t("Vuelos confirmados", "Flights confirmed"));
+      } catch (err: any) {
+        console.error('Error confirming flights:', err);
+        setConfirmationStatus(prev => ({ ...prev, flights: 'error' }));
+        toast.error(t("Error confirmando vuelos", "Error confirming flights"));
+      }
+    } else {
+      setConfirmationStatus(prev => ({ ...prev, flights: 'success' }));
+    }
+
+    // Confirm hotels
+    if (localBookings.length > 0) {
+      try {
+        for (const booking of localBookings.filter(b => b.status === 'confirmed' || b.status === 'pending')) {
+          await hotelConfirm.mutateAsync({
+            hotelReservationId: booking.hotel.hotel_id,
+            transactionId,
+          });
+        }
+        setConfirmationStatus(prev => ({ ...prev, hotels: 'success' }));
+        toast.success(t("Hoteles confirmados", "Hotels confirmed"));
+      } catch (err: any) {
+        console.error('Error confirming hotels:', err);
+        setConfirmationStatus(prev => ({ ...prev, hotels: 'error' }));
+        toast.error(t("Error confirmando hoteles", "Error confirming hotels"));
+      }
+    } else {
+      setConfirmationStatus(prev => ({ ...prev, hotels: 'success' }));
+    }
+
+    setIsConfirming(false);
+  };
 
   useEffect(() => {
     // Parse response from bank callback
-    // The bank should redirect here with query parameters or POST data
-    // For now, we'll check URL params
     const referencia = searchParams.get("referencia_transaccion");
     const estado = searchParams.get("estado_transaccion");
     const monto = searchParams.get("monto_transaccion");
@@ -43,9 +100,12 @@ export default function BankResponsePage() {
       setResponse(paymentResponse);
       setPaymentResponse(paymentResponse);
       setIsProcessing(false);
+
+      // If payment is approved, confirm bookings with external services
+      if (estado === "APROBADA") {
+        confirmBookings(referencia);
+      }
     } else {
-      // If no params, try to get from payment store (in case of direct navigation)
-      // Otherwise show error
       setError(t("No se recibió respuesta del banco", "No response received from bank"));
       setIsProcessing(false);
     }
@@ -115,6 +175,49 @@ export default function BankResponsePage() {
                     "Your payment has been processed successfully."
                   )}
                 </p>
+
+                {/* Confirmation Status */}
+                {(localFlightBookings.length > 0 || localBookings.length > 0) && (
+                  <div className="bg-blue-50 rounded-lg p-4 space-y-3 text-left">
+                    <h3 className="font-semibold text-blue-900">
+                      {isConfirming 
+                        ? t("Confirmando reservas...", "Confirming bookings...")
+                        : t("Estado de Confirmación", "Confirmation Status")}
+                    </h3>
+                    
+                    {localFlightBookings.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Plane className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm">{t("Vuelos:", "Flights:")}</span>
+                        {confirmationStatus.flights === 'pending' && isConfirming && (
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                        )}
+                        {confirmationStatus.flights === 'success' && (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        )}
+                        {confirmationStatus.flights === 'error' && (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                      </div>
+                    )}
+                    
+                    {localBookings.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Hotel className="h-4 w-4 text-green-600" />
+                        <span className="text-sm">{t("Hoteles:", "Hotels:")}</span>
+                        {confirmationStatus.hotels === 'pending' && isConfirming && (
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                        )}
+                        {confirmationStatus.hotels === 'success' && (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        )}
+                        {confirmationStatus.hotels === 'error' && (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               <>
