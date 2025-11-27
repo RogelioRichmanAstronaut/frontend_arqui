@@ -7,7 +7,7 @@ export const allPackages: Package[] = [
         includes: "Vuelo directo + Traslado + Desayuno",
         price: 1250000,
         displayPrice: "$1.250.000 COP",
-        airline: "Aerolínea X",
+
         hasBreakfast: true,
         hotel: {
             hotel_id: "HOT-001",
@@ -18,8 +18,7 @@ export const allPackages: Package[] = [
             direccion: "Av. 15 #100-11",
             servicios_hotel: ["wifi", "desayuno incluido", "gimnasio", "restaurante"],
             fotos: [
-                "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop",
-                "https://images.unsplash.com/photo-1520619555298-1581cf47c1c0?w=800&h=600&fit=crop",
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/H%C3%B4tel_Negresco_03.jpg/960px-H%C3%B4tel_Negresco_03.jpg",
             ],
             habitaciones: [
                 {
@@ -47,7 +46,7 @@ export const allPackages: Package[] = [
         includes: "Vuelo directo + Traslado",
         price: 850000,
         displayPrice: "$850.000 COP",
-        airline: "Aerolínea Y",
+
         hasBreakfast: false,
         hotel: {
             hotel_id: "HOT-003",
@@ -58,8 +57,7 @@ export const allPackages: Package[] = [
             direccion: "Calle 50 #15-25",
             servicios_hotel: ["wifi", "restaurante", "terraza"],
             fotos: [
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
-                "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Hotel_K%C3%A4mp_by_Night_in_Winter_-_panoramio.jpg/1280px-Hotel_K%C3%A4mp_by_Night_in_Winter_-_panoramio.jpg",
             ],
             habitaciones: [
                 {
@@ -79,7 +77,7 @@ export const allPackages: Package[] = [
         includes: "Vuelo directo + Traslado + Desayuno + Cena",
         price: 2500000,
         displayPrice: "$2.500.000 COP",
-        airline: "Aerolínea Z",
+
         hasBreakfast: true,
         hotel: {
             hotel_id: "HOT-002",
@@ -90,8 +88,7 @@ export const allPackages: Package[] = [
             direccion: "Carrera 10 #26-21",
             servicios_hotel: ["wifi", "spa", "piscina", "restaurante gourmet"],
             fotos: [
-                "https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800&h=600&fit=crop",
-                "https://images.unsplash.com/photo-1551632786-de41ec16a vector?w=800&h=600&fit=crop",
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/LasVegas_Casino_MGM_Grand.jpg/960px-LasVegas_Casino_MGM_Grand.jpg",
             ],
             habitaciones: [
                 {
@@ -119,7 +116,7 @@ export const allPackages: Package[] = [
         includes: "Vuelo directo + Traslado + Desayuno",
         price: 1100000,
         displayPrice: "$1.100.000 COP",
-        airline: "Aerolínea X",
+
         hasBreakfast: true,
         hotel: {
             hotel_id: "HOT-004",
@@ -130,8 +127,7 @@ export const allPackages: Package[] = [
             direccion: "Av. Colombia #5-50",
             servicios_hotel: ["wifi", "gimnasio", "restaurante", "bar"],
             fotos: [
-                "https://images.unsplash.com/photo-1564501049351-005e2ccb1144?w=800&h=600&fit=crop",
-                "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Hotel_Riosol_en_Gran_Canaria.jpg/2560px-Hotel_Riosol_en_Gran_Canaria.jpg",
             ],
             habitaciones: [
                 {
@@ -151,7 +147,7 @@ export const allPackages: Package[] = [
         includes: "Vuelo directo + Traslado",
         price: 650000,
         displayPrice: "$650.000 COP",
-        airline: "Aerolínea Y",
+
         hasBreakfast: false,
         hotel: {
             hotel_id: "HOT-005",
@@ -162,8 +158,7 @@ export const allPackages: Package[] = [
             direccion: "Calle 1 #2-10",
             servicios_hotel: ["wifi", "restaurante"],
             fotos: [
-                "https://images.unsplash.com/photo-1585132991992-378a50ee3015?w=800&h=600&fit=crop",
-                "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=800&h=600&fit=crop",
+                "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Icehotel-se-27.JPG/960px-Icehotel-se-27.JPG",
             ],
             habitaciones: [
                 {
@@ -183,7 +178,7 @@ export const allPackages: Package[] = [
         includes: "Vuelo directo + Traslado + Desayuno + Spa",
         price: 3200000,
         displayPrice: "$3.200.000 COP",
-        airline: "Aerolínea Z",
+
         hasBreakfast: true,
         hotel: {
             hotel_id: "HOT-006",
@@ -200,8 +195,7 @@ export const allPackages: Package[] = [
                 "playa privada",
             ],
             fotos: [
-                "https://images.unsplash.com/photo-1571003123894-169f27e0c0d4?w=800&h=600&fit=crop",
-                "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+                "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/16/1a/ea/54/hotel-presidente-4s.jpg?w=900&h=500&s=1",
             ],
             habitaciones: [
                 {

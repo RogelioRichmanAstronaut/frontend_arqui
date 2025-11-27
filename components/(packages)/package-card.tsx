@@ -7,7 +7,7 @@ interface PackageCardProps {
   stars: number;
   includes: string;
   displayPrice: string;
-  airline: string;
+
   imageUrl?: string;
   onSelect: () => void;
   index: number;
@@ -18,7 +18,7 @@ export function PackageCard({
   stars,
   includes,
   displayPrice,
-  airline,
+
   imageUrl,
   onSelect,
   index,
@@ -73,7 +73,7 @@ export function PackageCard({
               Desde {displayPrice}
             </p>
             <p className="text-sm text-gray-600">/ persona</p>
-            <p className="text-sm text-gray-600">{airline}</p>
+
           </div>
           <button className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-semibold py-2 px-4 rounded transition-colors">
             Ver Detalles

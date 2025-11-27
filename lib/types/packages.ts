@@ -25,7 +25,7 @@ export interface Package {
   includes: string;
   price: number;
   displayPrice: string;
-  airline: string;
+
   hasBreakfast: boolean;
   hotel?: Hotel;
   imageUrl?: string; // Image URL for the package card

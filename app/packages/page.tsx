@@ -113,7 +113,7 @@ function PackagesContent() {
       includes: hotel.amenities?.slice(0, 3).join(', ') || 'Servicios incluidos',
       price: minPrice,
       displayPrice: minPrice > 0 ? `$${minPrice.toLocaleString('es-CO')} COP` : 'Consultar precio',
-      airline: 'Aerolínea asociada',
+
       hasBreakfast: hotel.rooms?.some(r => r.includesBreakfast) || false,
       imageUrl: firstImage
     };
@@ -287,7 +287,7 @@ function PackagesContent() {
                       stars={pkg.stars}
                       includes={pkg.includes}
                       displayPrice={pkg.displayPrice}
-                      airline={pkg.airline}
+
                       imageUrl={pkg.imageUrl || pkg.hotel?.fotos?.[0]}
                       index={index}
                       onSelect={() => pkg.hotel && setSelectedHotel(pkg.hotel)}
