@@ -39,7 +39,7 @@ function AuthForm() {
             // Redirigir al endpoint de Google OAuth del backend
             const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/v1';
             const googleAuthUrl = `${BACKEND}/auth/google`;
-            
+
             // Redirigir a Google OAuth
             window.location.href = googleAuthUrl;
         } catch (error: any) {
@@ -66,19 +66,35 @@ function AuthForm() {
 
         try {
             if (isLogin) {
-                const result = await loginMutation.mutateAsync({ email, password });
-                // loginLocal se llama automáticamente en useLogin onSuccess
-                toast.success(t("Sesión iniciada", "Logged in successfully"));
-                router.push("/profile");
+                try {
+                    const result = await loginMutation.mutateAsync({ email, password });
+                    // loginLocal se llama automáticamente en useLogin onSuccess
+                    toast.success(t("Sesión iniciada", "Logged in successfully"));
+                    router.push("/profile");
+                } catch (apiError: any) {
+
+                    const DEFAULT_EMAIL = "demo@tripin.com";
+                    const DEFAULT_PASSWORD = "demo123";
+
+                    if (email === DEFAULT_EMAIL && password === DEFAULT_PASSWORD) {
+                        // Login offline con usuario demo
+                        loginLocal(email);
+                        toast.success(t("Sesión iniciada (modo offline)", "Logged in (offline mode)"));
+                        router.push("/profile");
+                    } else {
+                        // Si no son las credenciales demo, mostrar el error original
+                        throw apiError;
+                    }
+                }
             } else {
-                await registerMutation.mutateAsync({ 
-                    email, 
-                    password, 
+                await registerMutation.mutateAsync({
+                    email,
+                    password,
                     name: email.split('@')[0],
                     role: 'EMPLOYEE'
                 });
                 toast.success(t("Cuenta creada exitosamente", "Account created successfully"));
-                
+
                 // Login automático después del registro
                 try {
                     await loginMutation.mutateAsync({ email, password });
@@ -260,8 +276,8 @@ function AuthForm() {
                                 onClick={handleAuth}
                                 disabled={loginMutation.isPending || registerMutation.isPending}
                             >
-                                {(loginMutation.isPending || registerMutation.isPending) 
-                                    ? t("Procesando...", "Processing...") 
+                                {(loginMutation.isPending || registerMutation.isPending)
+                                    ? t("Procesando...", "Processing...")
                                     : (isLogin ? t("Ingresar", "Sign In") : t("Registrarse", "Sign Up"))}
                             </Button>
                             <div className="text-center text-sm text-gray-500">
@@ -274,6 +290,13 @@ function AuthForm() {
                                 </button>
                             </div>
                         </CardFooter>
+                        <div className="px-8 pb-6">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p className="text-xs text-blue-800 text-center">
+                                    <strong>{t("Modo Demo:", "Demo Mode:")}</strong> {t("Usa", "Use")} <code className="bg-blue-100 px-1 rounded">demo@tripin.com</code> / <code className="bg-blue-100 px-1 rounded">demo123</code>
+                                </p>
+                            </div>
+                        </div>
                     </Card>
                 </motion.div>
             </div>
