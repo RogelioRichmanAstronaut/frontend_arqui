@@ -80,15 +80,15 @@ function PackagesContent() {
   // Use API hotels if available, otherwise fallback to mock data only if no search has been performed
   const packagesFromApi = (apiHotels && apiHotels.length > 0) ? apiHotels.map((hotel): Package => {
     // Get first image from images array or use default
-    const firstImage = hotel.images && hotel.images.length > 0 
-      ? hotel.images[0] 
+    const firstImage = hotel.images && hotel.images.length > 0
+      ? hotel.images[0]
       : '/images/cards/default-hotel.jpg';
-    
+
     // Calculate price from rooms
     const minPrice = hotel.rooms && hotel.rooms.length > 0
       ? Math.min(...hotel.rooms.map(r => r.price || 0))
       : 0;
-    
+
     return {
       hotel: {
         hotel_id: hotel.hotelId,
@@ -121,12 +121,12 @@ function PackagesContent() {
 
   // Add imageUrl to mock packages if not present
   // Solo usar mocks si no hay datos de API y no se ha realizado una búsqueda
-  const packagesWithImages = packagesFromApi.length > 0 
-    ? packagesFromApi 
-    : (!shouldSearch ? allPackages.map(pkg => ({
-        ...pkg,
-        imageUrl: pkg.imageUrl || pkg.hotel?.fotos?.[0] || '/images/cards/default-hotel.jpg'
-      })) : []);
+  const packagesWithImages = packagesFromApi.length > 0
+    ? packagesFromApi
+    : allPackages.map(pkg => ({
+      ...pkg,
+      imageUrl: pkg.imageUrl || pkg.hotel?.fotos?.[0] || '/images/cards/default-hotel.jpg'
+    }));
 
   const packagesToDisplay = packagesWithImages.filter((pkg) => {
     if (hotelFilter) {
