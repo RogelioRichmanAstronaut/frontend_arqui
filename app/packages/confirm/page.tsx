@@ -220,7 +220,7 @@ export default function PackagesConfirmPage() {
         checkIn: searchDetails.checkIn || new Date().toISOString(),
         checkOut: searchDetails.checkOut || new Date().toISOString(),
         totalPrice: totalEstimated,
-        status: 'pending'
+        status: 'confirmed'
       });
 
       isConfirming.current = true;

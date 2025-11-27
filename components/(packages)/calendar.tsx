@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactElement } from "react";
 import { Calendar } from "lucide-react";
 import { useLanguageStore } from "@/lib/store";
 import { usePackageSearchStore } from "@/lib/package-search-store";
@@ -100,7 +100,7 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
       1
     );
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(displayDate);
-    const days: JSX.Element[] = [];
+    const days: ReactElement[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

@@ -64,8 +64,8 @@ function ProfileContent() {
             setFormData({
                 names: clientData.name || "",
                 email: clientData.email || "",
-                country: (clientData as any).address || (clientData as any).country || "",
-                phone: clientData.phone || "", // Usar 'phone' en lugar de 'phoneNumber'
+                country: "",
+                phone: clientData.phone || "",
                 idNumber: clientData.clientId || "",
             });
         } else if (user) {
