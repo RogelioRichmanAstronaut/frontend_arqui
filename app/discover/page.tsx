@@ -13,7 +13,7 @@ const queryClient = new QueryClient();
 function DiscoverContent() {
   const { locale } = useLanguageStore()
   const t = (es: string, en: string) => (locale === "es" ? es : en)
-  
+
   // Obtener ciudades del backend
   const { data: catalogCities, isLoading: loadingCities } = useCatalogCities();
 
@@ -126,7 +126,7 @@ function DiscoverContent() {
                   "Colombia is a country full of contrasts and natural wonders waiting to be explored. From Caribbean beaches to Andean mountains, through tropical jungles and deserts, our country offers a unique diversity that captivates all travelers."
                 )}
               </p>
-              <p className="text-gray-600 leading-relaxed mb-6">
+              <p className="text-gray-600 leading-relaxed text-lg mb-6">
                 {t(
                   "En Trip-In te invitamos a descubrir los destinos más fascinantes de Colombia. Cada lugar tiene su propia historia, cultura y encanto especial. Ya sea que busques relajarte en playas paradisíacas, explorar ciudades históricas, aventurarte en la naturaleza o sumergirte en tradiciones locales, tenemos el destino perfecto para ti.",
                   "At Trip-In we invite you to discover the most fascinating destinations in Colombia. Each place has its own history, culture and special charm. Whether you're looking to relax on paradisiacal beaches, explore historic cities, adventure in nature or immerse yourself in local traditions, we have the perfect destination for you."
@@ -139,9 +139,13 @@ function DiscoverContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="relative"
+            className="relative h-[400px] rounded-2xl overflow-hidden shadow-2xl mt-12"
           >
-          
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Sakurajima_at_Sunset.jpg/960px-Sakurajima_at_Sunset.jpg"
+              alt="Japón"
+              className="w-full h-full object-cover"
+            />
           </motion.div>
         </div>
 
@@ -177,7 +181,7 @@ function DiscoverContent() {
             </motion.div>
           ))}
         </div>
-        
+
         {loadingCities && (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#00C2A8]"></div>
