@@ -70,12 +70,12 @@ export type CheckoutConfirmResponseDto = {
 // Payments
 export type PaymentInitiateRequestDto = {
   clientId: string;
-  clientName?: string;
+  clientName: string;
   totalAmount: number;
   currency: string;
-  description?: string;
-  returnUrl?: string;
-  callbackUrl?: string;
+  description: string;
+  returnUrl: string;
+  callbackUrl: string;
   reservationId?: string;
 };
 export type PaymentInitiateResponseDto = {
@@ -85,9 +85,27 @@ export type PaymentInitiateResponseDto = {
   expiresAt?: string;
   state?: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
   reservationId?: string;
-  url_respuesta?: string;
+  reference?: string;
+  transactionId?: string;
 };
 export type PaymentStatusQuery = { reservationId?: string; orderId?: string; paymentAttemptId?: string; transactionId?: string };
+
+// Bank payloads (proxy target)
+export type BankPaymentRequestDto = {
+  monto: number;
+  descripcion_pago: string;
+  cedula_cliente: string;
+  nombre_cliente: string;
+  url_respuesta: string;
+  url_notificacion: string;
+};
+
+export type BankPaymentResponseDto = {
+  id_pago: number | string;
+  referencia_transaccion: string;
+  url_pago?: string;
+  estado: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
+};
 
 // Reservations
 export type CreateReservationDto = { clientUuid: string; currency: string; totalAmount: number; note?: string };

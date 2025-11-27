@@ -11,7 +11,7 @@ import { usePaymentStore, type PaymentResponse } from "@/lib/payment-store";
 import { usePackageReservationStore } from "@/lib/package-reservation-store";
 import { useFlightReservationStore } from "@/lib/flight-reservation-store";
 import { useLanguageStore } from "@/lib/store";
-import { apiClient } from "@/lib/api/client";
+import { useProcessPayment } from "@/lib/hooks/usePayments";
 
 const formatCurrency = (amount: number): string => {
   return `$${amount.toLocaleString("es-CO")}`;
@@ -41,6 +41,7 @@ export default function BankPaymentPage() {
     setError,
     reset,
   } = usePaymentStore();
+  const paymentMutation = useProcessPayment();
 
   // Get reservation data to initialize payment info - use individual selectors to avoid object recreation
   const packageHotel = usePackageReservationStore((state) => state.hotel);
@@ -176,41 +177,30 @@ export default function BankPaymentPage() {
     setError(null);
     setCustomerInfo({ customerId, customerName });
 
-    // Build payment payload para el proxy de backend_arqui
-    const payload = {
-      clientId: `CC-${customerId}`,
-      clientName: customerName,
-      totalAmount: totalAmount,
-      currency: "COP",
-      description: description,
-      returnUrl: `${window.location.origin}/bank/response`,
-      callbackUrl: `${window.location.origin}/api/bank/notificacion`,
-    };
+    const formattedClientId = customerId.startsWith("CC-")
+      ? customerId
+      : `CC-${customerId}`;
 
     try {
-      // Usar el proxy de backend_arqui en lugar de llamar directo al banco
-      const data = await apiClient<{
-        paymentAttemptId: string;
-        bankPaymentUrl?: string;
-        totalAmount: number;
-        expiresAt?: string;
-        state?: string;
-      }>('/payments/init', {
-        method: 'POST',
-        body: payload,
-        idempotencyKey: `pay-${Date.now()}`,
+      const data = await paymentMutation.processPayment({
+        clientId: formattedClientId,
+        clientName: customerName.trim(),
+        totalAmount,
+        currency: "COP",
+        description: description || t("Pago Trip-In", "Trip-In payment"),
+        returnUrl: `${window.location.origin}/bank/response`,
+        callbackUrl: `${window.location.origin}/api/bank/notificacion`,
       });
 
-      // Si el banco devuelve una URL de pago, redirigir
       if (data.bankPaymentUrl) {
         window.location.href = data.bankPaymentUrl;
         return;
       }
 
-      // Si no hay URL, mostrar respuesta directa
       const paymentResponse: PaymentResponse = {
-        referencia_transaccion: data.paymentAttemptId,
-        estado_transaccion: (data.state as "APROBADA" | "RECHAZADA" | "PENDIENTE") || "PENDIENTE",
+        referencia_transaccion: data.reference || data.paymentAttemptId,
+        estado_transaccion:
+          (data.state as "APROBADA" | "RECHAZADA" | "PENDIENTE") || "PENDIENTE",
         monto_transaccion: data.totalAmount,
         fecha_hora_pago: new Date().toISOString(),
         codigo_respuesta: "00",
@@ -220,7 +210,8 @@ export default function BankPaymentPage() {
 
     } catch (err: any) {
       setError(
-        err?.message || t("Error al comunicarse con el banco", "Error communicating with bank")
+        err?.message ||
+          t("Error al comunicarse con el banco", "Error communicating with bank")
       );
     } finally {
       setLoading(false);
