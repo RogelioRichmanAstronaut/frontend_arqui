@@ -21,9 +21,10 @@ import type {
 
 import { usePackageSearchStore } from "@/lib/package-search-store";
 import { allPackages } from "@/lib/data/packages";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useHotelSearch } from "@/lib/hooks/useHotels";
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { hotels, auth, features } from "@/lib/api";
 import { toast } from "sonner";
+import type { HotelDto } from "@/lib/types/api";
 
 const queryClient = new QueryClient();
 
@@ -39,13 +40,122 @@ function PackagesContent() {
   const searchBarRef = useRef<HTMLDivElement>(null);
   const isInitialMount = useRef(true);
   const [shouldSearch, setShouldSearch] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const { data: apiHotels, isLoading, error } = useHotelSearch({
-    destination: destination || '',
-    checkIn: checkIn || new Date().toISOString().split('T')[0],
-    checkOut: checkOut || new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    adults: adults || 2
-  }, shouldSearch && !!destination);
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  // Hotel search query using our API service
+  const { data: apiHotels, isLoading, error, refetch } = useQuery({
+    queryKey: ['hotels-search', destination, checkIn, checkOut, adults],
+    queryFn: async () => {
+      if (!destination || !checkIn || !checkOut) {
+        throw new Error('Missing required search parameters');
+      }
+
+      // Convert destination to cityId format (CO-BOG)
+      let cityId = destination;
+      if (!destination.startsWith('CO-')) {
+        // Try to map common cities to their codes
+        const cityMapping: Record<string, string> = {
+          'bogota': 'CO-BOG',
+          'bogotá': 'CO-BOG',
+          'medellin': 'CO-MDE',
+          'medellín': 'CO-MDE',
+          'cartagena': 'CO-CTG',
+          'cali': 'CO-CLO',
+          'barranquilla': 'CO-BAQ'
+        };
+        
+        const normalizedDest = destination.toLowerCase();
+        cityId = cityMapping[normalizedDest] || `CO-${destination.substring(0, 3).toUpperCase()}`;
+      }
+
+      try {
+        const results = await hotels.search({
+          cityId,
+          checkIn,
+          checkOut,
+          adults: adults || 2,
+          rooms: 1
+        });
+        
+        toast.success(t(
+          `Se encontraron ${results.length} hoteles disponibles`, 
+          `Found ${results.length} available hotels`
+        ));
+        
+        return results;
+      } catch (error: any) {
+        console.error('Hotel search error:', error);
+        
+        // Show user-friendly error messages
+        if (error.status === 401) {
+          toast.error(t('Sesión expirada. Por favor inicia sesión.', 'Session expired. Please log in.'));
+          setIsAuthenticated(false);
+        } else if (error.status === 404) {
+          toast.error(t('No se encontraron hoteles para este destino', 'No hotels found for this destination'));
+        } else {
+          toast.error(t('Error al buscar hoteles', 'Error searching hotels'));
+        }
+        
+        throw error;
+      }
+    },
+    enabled: shouldSearch && !!destination && !!checkIn && !!checkOut && isAuthenticated && features.hotelBooking,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry on authentication errors
+      if (error?.status === 401) return false;
+      return failureCount < 2;
+    }
+  });
+
+  // Manual search trigger for testing
+  const handleTestSearch = async () => {
+    if (!isAuthenticated) {
+      toast.error(t('Debes iniciar sesión para buscar hoteles', 'You must log in to search hotels'));
+      return;
+    }
+    
+    if (!destination) {
+      toast.error(t('Selecciona un destino', 'Select a destination'));
+      return;
+    }
+    
+    setShouldSearch(true);
+    refetch();
+  };
+
+  // Quick login for testing (you should replace with proper login flow)
+  const handleQuickLogin = async () => {
+    try {
+      const response = await auth.login({
+        email: 'empleado@turismo.com', // Default test user
+        password: 'password123'
+      });
+      
+      const token = response.access_token || response.token;
+      if (token) {
+        localStorage.setItem('auth_token', token);
+        setIsAuthenticated(true);
+        toast.success(t('Sesión iniciada correctamente', 'Logged in successfully'));
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(t('Error al iniciar sesión', 'Login error: ') + (error.message || 'Unknown error'));
+    }
+  };
+
+  // Logout helper
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    setIsAuthenticated(false);
+    toast.info(t('Sesión cerrada', 'Logged out'));
+  };
 
   useEffect(() => {
     if (destination && checkIn && checkOut) {
@@ -68,7 +178,7 @@ function PackagesContent() {
         }, 100);
       }
     }
-  }, []);
+  }, [destination, hotelFilter]);
 
   const normalizeText = (text: string) => {
     return text
@@ -78,7 +188,7 @@ function PackagesContent() {
   };
 
   // Use API hotels if available, otherwise fallback to mock data only if no search has been performed
-  const packagesFromApi = (apiHotels && apiHotels.length > 0) ? apiHotels.map((hotel): Package => {
+  const packagesFromApi = (apiHotels && apiHotels.length > 0) ? apiHotels.map((hotel: HotelDto): Package => {
     // Get first image from images array or use default
     const firstImage = hotel.images && hotel.images.length > 0
       ? hotel.images[0]
@@ -91,30 +201,29 @@ function PackagesContent() {
 
     return {
       hotel: {
-        hotel_id: hotel.hotelId,
+        hotel_id: hotel.id,
         nombre: hotel.name,
-        ciudad: hotel.city,
-        pais: hotel.country || '',
-        categoria_estrellas: hotel.stars || 3,
-        direccion: '',
+        ciudad: hotel.city || 'Ciudad',
+        pais: 'Colombia',
+        categoria_estrellas: hotel.rating || 3,
+        direccion: hotel.address || '',
         servicios_hotel: hotel.amenities || [],
         fotos: hotel.images && hotel.images.length > 0 ? hotel.images : [firstImage],
         habitaciones: (hotel.rooms || []).map((room): RoomType => ({
-          habitacion_id: room.roomId,
+          habitacion_id: room.id,
           tipo: room.type,
-          disponibilidad: room.available ? 'DISPONIBLE' : 'NO_DISPONIBLE',
-          codigo_tipo_habitacion: room.roomId,
+          disponibilidad: room.available > 0 ? 'DISPONIBLE' : 'NO_DISPONIBLE',
+          codigo_tipo_habitacion: room.id,
           precio: room.price || 0,
-          servicios_habitacion: []
+          servicios_habitacion: room.amenities || []
         }))
       },
       title: hotel.name,
-      stars: hotel.stars || 3,
+      stars: hotel.rating || 3,
       includes: hotel.amenities?.slice(0, 3).join(', ') || 'Servicios incluidos',
       price: minPrice,
       displayPrice: minPrice > 0 ? `$${minPrice.toLocaleString('es-CO')} COP` : 'Consultar precio',
-
-      hasBreakfast: hotel.rooms?.some(r => r.includesBreakfast) || false,
+      hasBreakfast: hotel.rooms?.some(r => r.amenities?.includes('breakfast')) || false,
       imageUrl: firstImage
     };
   }) : [];
@@ -226,6 +335,76 @@ function PackagesContent() {
 
       <section ref={searchBarRef} className="container mx-auto px-4 lg:px-8 -mt-8 relative z-30">
         <PackagesSearchBar />
+        
+        {/* API Testing Section */}
+        <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Estado API:</span>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  isAuthenticated 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {isAuthenticated ? 'Autenticado' : 'No autenticado'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Hoteles:</span>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                  features.hotelBooking 
+                    ? 'bg-blue-100 text-blue-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {features.hotelBooking ? 'Habilitado' : 'Deshabilitado'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              {!isAuthenticated ? (
+                <button
+                  onClick={handleQuickLogin}
+                  className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700"
+                >
+                  Login Test
+                </button>
+              ) : (
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1 bg-gray-600 text-white rounded text-xs font-medium hover:bg-gray-700"
+                >
+                  Logout
+                </button>
+              )}
+              
+              <button
+                onClick={handleTestSearch}
+                disabled={!destination || isLoading || !isAuthenticated}
+                className="px-4 py-2 bg-[#00C2A8] text-white rounded-lg text-sm font-medium hover:bg-[#00A892] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? 'Buscando...' : 'Probar API'}
+              </button>
+            </div>
+          </div>
+          
+          {destination && (
+            <div className="mt-2 text-sm text-gray-600">
+              Destino: <span className="font-medium">{destination}</span>
+              {checkIn && checkOut && (
+                <span className="ml-4">
+                  | Fechas: {checkIn} - {checkOut}
+                </span>
+              )}
+              {apiHotels && apiHotels.length > 0 && (
+                <span className="ml-4 text-green-600 font-medium">
+                  | {apiHotels.length} hoteles encontrados
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       <section className="container mx-auto px-4 lg:px-8 py-12">

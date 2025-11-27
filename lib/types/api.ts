@@ -80,3 +80,151 @@ export type ReservationDto = { id: string; clientUuid: string; currency: string;
 
 // Catalog
 export type CityDto = { id: string; name: string; country?: string };
+
+// Flight DTOs
+export type FlightSearchRequestDto = {
+  originCityId: string; // Format: CO-BOG
+  destinationCityId: string; // Format: CO-MDE
+  departureAt: string; // Format: YYYY-MM-DD
+  returnAt?: string; // Optional for round trip
+  passengers: number;
+  cabin: 'ECONOMICA' | 'PREMIUM' | 'BUSINESS' | 'FIRST';
+};
+
+export type PassengerDto = {
+  name: string;
+  doc: string;
+  age?: number;
+  seat?: string;
+};
+
+export type FlightDto = {
+  id: string;
+  flightNumber: string;
+  airline: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  price: number;
+  currency: string;
+  availableSeats: number;
+  cabin: string;
+};
+
+export type FlightReservationRequestDto = {
+  reservationId: string;
+  flightId: string;
+  clientId: string;
+  passengers: PassengerDto[];
+};
+
+export type FlightReservationResponseDto = {
+  flightReservationId: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  totalAmount: number;
+  currency: string;
+  expiresAt?: string;
+};
+
+export type FlightConfirmationRequestDto = {
+  flightReservationId: string;
+  transactionId: string;
+};
+
+export type FlightCancellationRequestDto = {
+  confirmedId?: string;
+  reservationId?: string;
+  origin: 'CLIENTE' | 'SISTEMA' | 'AEROLINEA';
+  reason: string;
+};
+
+// Hotel DTOs
+export type HotelSearchRequestDto = {
+  cityId: string; // Format: CO-BOG
+  checkIn: string; // Format: YYYY-MM-DD
+  checkOut: string; // Format: YYYY-MM-DD
+  adults: number;
+  rooms: number;
+};
+
+export type RoomDto = {
+  id: string;
+  type: string;
+  description?: string;
+  price: number;
+  currency: string;
+  available: number;
+  amenities?: string[];
+};
+
+export type HotelDto = {
+  id: string;
+  name: string;
+  address?: string;
+  city: string;
+  rating?: number;
+  rooms: RoomDto[];
+  amenities?: string[];
+  images?: string[];
+};
+
+export type HotelReservationRequestDto = {
+  hotelId: string;
+  roomId: string;
+  clientId: string;
+  checkIn: string;
+  checkOut: string;
+  reservationId: string;
+  rooms: number;
+  adults: number;
+};
+
+export type HotelReservationResponseDto = {
+  hotelReservationId: string;
+  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  totalAmount: number;
+  currency: string;
+  expiresAt?: string;
+};
+
+export type HotelConfirmationRequestDto = {
+  hotelReservationId: string;
+  transactionId: string;
+};
+
+export type HotelCancellationRequestDto = {
+  confirmedId?: string;
+  reservationId?: string;
+  origin: 'CLIENTE' | 'SISTEMA' | 'HOTEL';
+  reason: string;
+  notes?: string;
+};
+
+// Payment DTOs (extended)
+export type PaymentState = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'CANCELADA' | 'EXPIRADA';
+
+export type PaymentWebhookDto = {
+  transactionId: string;
+  paymentAttemptId: string;
+  clientId: string;
+  totalAmount: number;
+  currency: string;
+  authCode?: string;
+  receiptRef?: string;
+  transactionAt: string;
+  signature: string;
+  state: PaymentState;
+};
+
+export type PaymentStatusResponseDto = {
+  transactionId: string;
+  state: PaymentState;
+  totalAmount: number;
+  currency: string;
+  createdAt: string;
+  completedAt?: string;
+  authCode?: string;
+  receiptRef?: string;
+};
