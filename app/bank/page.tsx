@@ -23,12 +23,13 @@ export default function BankPaymentPage() {
   const router = useRouter();
   const { locale } = useLanguageStore();
   const t = (es: string, en: string) => (locale === "es" ? es : en);
-  
+
   const hasRedirected = useRef(false);
   const [customerId, setCustomerId] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [documentType, setDocumentType] = useState<'CC' | 'TI' | 'PASS'>('CC');
   const [validationError, setValidationError] = useState<string | null>(null);
-  
+
   const {
     paymentType,
     totalAmount,
@@ -48,7 +49,7 @@ export default function BankPaymentPage() {
   const packageHotel = usePackageReservationStore((state) => state.hotel);
   const packageRooms = usePackageReservationStore((state) => state.rooms);
   const packageSearchDetails = usePackageReservationStore((state) => state.searchDetails);
-  
+
   const flightFlight = useFlightReservationStore((state) => state.flight);
   const flightSelectedClasses = useFlightReservationStore((state) => state.selectedClasses);
   const flightSearchDetails = useFlightReservationStore((state) => state.searchDetails);
@@ -56,10 +57,10 @@ export default function BankPaymentPage() {
   // Calculate breakdown and total from reservations
   const calculatePackageTotal = (): number => {
     if (!packageHotel || !packageSearchDetails) return 0;
-    
+
     const roomsRequested = packageSearchDetails.rooms || 1;
     const selectedRooms = packageRooms || [];
-    
+
     let pricePerNight = 0;
     if (selectedRooms.length > 0) {
       pricePerNight = selectedRooms
@@ -73,15 +74,15 @@ export default function BankPaymentPage() {
         .slice(0, roomsRequested)
         .reduce((acc, room) => acc + room.precio, 0);
     }
-    
+
     const nights = packageSearchDetails.checkIn && packageSearchDetails.checkOut
       ? Math.ceil(
-          (new Date(packageSearchDetails.checkOut).getTime() -
-            new Date(packageSearchDetails.checkIn).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
+        (new Date(packageSearchDetails.checkOut).getTime() -
+          new Date(packageSearchDetails.checkIn).getTime()) /
+        (1000 * 60 * 60 * 24)
+      )
       : 1;
-    
+
     return pricePerNight * nights;
   };
 
@@ -97,7 +98,7 @@ export default function BankPaymentPage() {
 
   // Initialize payment info from reservations (fallback if not set from confirm page)
   const hasInitialized = useRef(false);
-  
+
   useEffect(() => {
     // Only run once if payment info is not set and we haven't initialized yet
     if (paymentType === null && totalAmount === 0 && !hasInitialized.current) {
@@ -109,7 +110,7 @@ export default function BankPaymentPage() {
         if (flightTotal > 0 && flightFlight) {
           descriptions.push(`Vuelo ${flightFlight.airline} #${flightFlight.flightId}`);
         }
-        
+
         hasInitialized.current = true;
         setPaymentInfo({
           paymentType: packageTotal > 0 ? "package" : "flight",
@@ -223,7 +224,7 @@ export default function BankPaymentPage() {
   // Show payment response
   if (paymentResponse) {
     const isApproved = paymentResponse.estado_transaccion === "APROBADA";
-    
+
     return (
       <div className="min-h-screen bg-gray-50 py-10">
         <div className="container mx-auto px-4 lg:px-8 max-w-2xl">
@@ -275,9 +276,8 @@ export default function BankPaymentPage() {
                     {t("Estado", "Status")}:
                   </span>
                   <span
-                    className={`font-semibold ${
-                      isApproved ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`font-semibold ${isApproved ? "text-green-600" : "text-red-600"
+                      }`}
                   >
                     {paymentResponse.estado_transaccion}
                   </span>
@@ -389,7 +389,7 @@ export default function BankPaymentPage() {
                   </span>
                   <span className="font-semibold text-[#0A2540]">{description}</span>
                 </div>
-                
+
                 {/* Show breakdown if both package and flight exist */}
                 {(packageTotal > 0 && flightTotal > 0) && (
                   <>
@@ -417,7 +417,7 @@ export default function BankPaymentPage() {
                     </div>
                   </>
                 )}
-                
+
                 <div className="flex justify-between items-center border-t pt-4">
                   <span className="text-lg font-semibold text-[#0A2540]">
                     {t("Total a pagar", "Total to pay")}:
@@ -429,6 +429,21 @@ export default function BankPaymentPage() {
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#0A2540]">
+                    {t("Tipo de Documento", "Document Type")} *
+                  </label>
+                  <select
+                    value={documentType}
+                    onChange={(e) => setDocumentType(e.target.value as 'CC' | 'TI' | 'PASS')}
+                    className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-[#00C2A8] focus:ring-1 focus:ring-[#00C2A8] transition-colors"
+                  >
+                    <option value="CC">CC - {t("Cédula de Ciudadanía", "Citizenship Card")}</option>
+                    <option value="TI">TI - {t("Tarjeta de Identidad", "Identity Card")}</option>
+                    <option value="PASS">PASS - {t("Pasaporte", "Passport")}</option>
+                  </select>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[#0A2540]">
                     {t("Cédula / Documento de identidad", "ID Number")} *

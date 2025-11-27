@@ -25,16 +25,16 @@ export default function CompleteProfilePage() {
             try {
                 const client = await clients.getMe();
                 console.log('✅ Cliente existente encontrado:', client);
-                
+
                 // Si el cliente tiene nombre y teléfono, el perfil está completo
                 if (client && client.name && client.phone) {
                     console.log('✅ Perfil completo, redirigiendo...');
-                    
+
                     // Guardar clientId en el store
                     if (client.clientId) {
                         setClientId(client.clientId);
                     }
-                    
+
                     // Actualizar el estado local con los datos del backend
                     updateUser({
                         names: client.name,
@@ -50,7 +50,7 @@ export default function CompleteProfilePage() {
             }
             setIsCheckingProfile(false);
         };
-        
+
         checkProfile();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Solo ejecutar una vez al montar
@@ -60,6 +60,7 @@ export default function CompleteProfilePage() {
         country: "",
         phone: "",
         idNumber: "",
+        documentType: "CC" as 'CC' | 'TI' | 'PASS',
     });
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,10 +77,10 @@ export default function CompleteProfilePage() {
 
         setIsSubmitting(true);
         console.log('📝 Enviando formulario:', formData);
-        
+
         try {
             const newClientId = `CC-${formData.idNumber}`;
-            
+
             // Intentar obtener el cliente existente usando /clients/me
             let existingClient = null;
             try {
@@ -88,7 +89,7 @@ export default function CompleteProfilePage() {
             } catch (e) {
                 console.log('➕ No hay cliente, se creará uno nuevo');
             }
-            
+
             if (existingClient) {
                 // Cliente ya existe, actualizar con el ID del backend
                 console.log('🔄 Actualizando cliente:', existingClient.id);
@@ -139,10 +140,10 @@ export default function CompleteProfilePage() {
             // Update local user state - IMPORTANTE para que hasCompleteProfile() funcione
             console.log('💾 Actualizando estado local con:', formData);
             updateUser(formData);
-            
+
             // Pequeña espera para asegurar que el estado se actualice
             await new Promise(resolve => setTimeout(resolve, 100));
-            
+
             console.log('✅ Perfil completado, redirigiendo...');
             router.push("/profile");
         } catch (error: any) {
@@ -190,18 +191,35 @@ export default function CompleteProfilePage() {
                             <Input id="phone" value={formData.phone} onChange={handleChange} placeholder="+57 300 123 4567" />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="idNumber">{t("Número de Cédula", "ID Number")}</Label>
+                            <Label htmlFor="documentType">{t("Tipo de Documento", "Document Type")}</Label>
+                            <select
+                                id="documentType"
+                                value={formData.documentType}
+                                onChange={(e) => setFormData(prev => ({ ...prev, documentType: e.target.value as 'CC' | 'TI' | 'PASS' }))}
+                                className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-[#00C2A8] focus:ring-1 focus:ring-[#00C2A8] transition-colors"
+                            >
+                                <option value="CC">CC - {t("Cédula de Ciudadanía", "Citizenship Card")}</option>
+                                <option value="TI">TI - {t("Tarjeta de Identidad", "Identity Card")}</option>
+                                <option value="PASS">PASS - {t("Pasaporte", "Passport")}</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="idNumber">
+                                {formData.documentType === 'CC' && t("Número de Cédula", "ID Number")}
+                                {formData.documentType === 'TI' && t("Número de Tarjeta de Identidad", "Identity Card Number")}
+                                {formData.documentType === 'PASS' && t("Número de Pasaporte", "Passport Number")}
+                            </Label>
                             <Input id="idNumber" value={formData.idNumber} onChange={handleChange} placeholder="1234567890" />
                         </div>
                     </CardContent>
                     <CardFooter>
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             className="w-full bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting 
-                                ? t("Guardando...", "Saving...") 
+                            {isSubmitting
+                                ? t("Guardando...", "Saving...")
                                 : t("Guardar y Continuar", "Save and Continue")}
                         </Button>
                     </CardFooter>
