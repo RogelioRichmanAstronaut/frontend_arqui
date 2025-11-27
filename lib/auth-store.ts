@@ -7,6 +7,7 @@ interface User {
     country?: string;
     phone?: string;
     idNumber?: string;
+    documentType?: 'CC' | 'TI' | 'PASS';
 }
 
 interface AuthStore {

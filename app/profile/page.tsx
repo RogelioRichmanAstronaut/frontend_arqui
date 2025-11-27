@@ -57,6 +57,7 @@ function ProfileContent() {
         country: "",
         phone: "",
         idNumber: "",
+        documentType: "CC" as 'CC' | 'TI' | 'PASS',
     });
 
     useEffect(() => {
@@ -67,6 +68,7 @@ function ProfileContent() {
                 country: "",
                 phone: clientData.phone || "",
                 idNumber: clientData.clientId || "",
+                documentType: clientData.documentType || "CC",
             });
         } else if (user) {
             setFormData({
@@ -75,6 +77,7 @@ function ProfileContent() {
                 country: user.country || "",
                 phone: user.phone || "",
                 idNumber: user.idNumber || "",
+                documentType: user.documentType || "CC",
             });
         }
     }, [clientData, user]);
@@ -158,6 +161,20 @@ function ProfileContent() {
                             placeholder="+57 300 123 4567"
                             className="h-12 px-4 bg-gray-50 border-gray-200 focus:bg-white transition-colors"
                         />
+                    </div>
+                    <div className="space-y-3">
+                        <Label htmlFor="documentType" className="text-base font-medium text-[#0A2540]">{t("Tipo de Documento", "Document Type")}</Label>
+                        <select
+                            id="documentType"
+                            name="documentType"
+                            value={formData.documentType}
+                            onChange={(e) => setFormData(prev => ({ ...prev, documentType: e.target.value as 'CC' | 'TI' | 'PASS' }))}
+                            className="h-12 px-4 bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-[#00C2A8] focus:ring-1 focus:ring-[#00C2A8] transition-colors w-full"
+                        >
+                            <option value="CC">CC - {t("Cédula de Ciudadanía", "Citizenship Card")}</option>
+                            <option value="TI">TI - {t("Tarjeta de Identidad", "Identity Card")}</option>
+                            <option value="PASS">PASS - {t("Pasaporte", "Passport")}</option>
+                        </select>
                     </div>
                     <div className="space-y-3">
                         <Label htmlFor="idNumber" className="text-base font-medium text-[#0A2540]">{t("Número de Identificación", "ID Number")}</Label>
