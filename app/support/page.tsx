@@ -28,8 +28,8 @@ export default function SupportPage() {
     {
       name: "Andrés",
       role: {
-        es: "Gerente de Operaciones",
-        en: "Operations Manager"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/andres.png",
       linkedin: "https://linkedin.com/in/member1"
@@ -37,56 +37,56 @@ export default function SupportPage() {
     {
       name: "Daniel",
       role: {
-        es: "Gerente de Operaciones",
-        en: "Operations Manager"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/Dani.png",
-      linkedin: "https://linkedin.com/in/member2"
+      linkedin: "https://www.linkedin.com/in/danisando/"
     },
     {
       name: "Martin",
       role: {
-        es: "Especialista en Reservas",
-        en: "Reservations Specialist"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/martin.png",
-      linkedin: "https://linkedin.com/in/member3"
+      linkedin: "https://www.linkedin.com/in/martin-vasquez-1007a6353/"
     },
     {
       name: "Sebastián",
       role: {
-        es: "Coordinador de Viajes",
-        en: "Travel Coordinator"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/Sebas.png",
-      linkedin: "https://linkedin.com/in/member4"
+      linkedin: "https://www.linkedin.com/in/juan-sebastian-mondragon/"
     },
     {
       name: "Miguel",
       role: {
-        es: "Asesor de Clientes",
-        en: "Customer Advisor"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/miguel.png",
-      linkedin: "https://linkedin.com/in/member5"
+      linkedin: "https://www.linkedin.com/in/mangelbaron/"
     },
     {
       name: "Eliana",
       role: {
-        es: "Especialista en Marketing",
-        en: "Marketing Specialist"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/eli.png",
-      linkedin: "https://linkedin.com/in/member6"
+      linkedin: "https://www.linkedin.com/in/eliana-katherine-cepeda-gonzalez-17937729a/"
     },
     {
       name: "David",
       role: {
-        es: "Soporte Técnico",
-        en: "Technical Support"
+        es: "",
+        en: ""
       },
       image: "/images/avatar/david.png",
-      linkedin: "https://linkedin.com/in/member7"
+      linkedin: "https://www.linkedin.com/in/david-felipe-vargas-c%C3%A1rdenas-13b02b317/"
     },
   ]
 

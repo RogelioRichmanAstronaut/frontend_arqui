@@ -23,12 +23,12 @@ function ProfileContent() {
 
     // Usar el nuevo endpoint /clients/me
     const { data: clientData, isLoading: loadingClient } = useMyClient();
-    
+
     // Guardar el clientId cuando se obtiene del backend
     useEffect(() => {
         if (clientData?.clientId) {
             setClientId(clientData.clientId);
-            
+
             // Actualizar el estado local si el cliente tiene datos
             if (clientData.name && clientData.phone && !hasCompleteProfile()) {
                 updateLocal({
@@ -39,7 +39,7 @@ function ProfileContent() {
             }
         }
     }, [clientData, hasCompleteProfile, updateLocal, setClientId]);
-    
+
     // Redirect to complete profile if incomplete (solo si NO está cargando)
     useEffect(() => {
         if (!loadingClient && user && !hasCompleteProfile() && !clientData) {
@@ -64,7 +64,7 @@ function ProfileContent() {
             setFormData({
                 names: clientData.name || "",
                 email: clientData.email || "",
-                country: clientData.address || "",
+                country: (clientData as any).address || (clientData as any).country || "",
                 phone: clientData.phone || "", // Usar 'phone' en lugar de 'phoneNumber'
                 idNumber: clientData.clientId || "",
             });
@@ -92,7 +92,8 @@ function ProfileContent() {
                 name: formData.names,
                 email: formData.email,
                 phone: formData.phone,
-            });
+                address: formData.country,
+            } as any);
             updateLocal(formData);
             toast.success(t("Perfil actualizado correctamente", "Profile updated successfully"));
         } catch (error: any) {
@@ -177,8 +178,8 @@ function ProfileContent() {
                         className="h-12 px-8 bg-[#00C2A8] hover:bg-[#00C2A8]/90 text-white font-semibold text-lg shadow-md hover:shadow-lg transition-all"
                         disabled={updateClientMutation.isPending || loadingClient}
                     >
-                        {updateClientMutation.isPending 
-                            ? t("Guardando...", "Saving...") 
+                        {updateClientMutation.isPending
+                            ? t("Guardando...", "Saving...")
                             : t("Guardar Cambios", "Save Changes")}
                     </Button>
                 </div>
