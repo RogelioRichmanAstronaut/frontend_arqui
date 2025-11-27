@@ -4,10 +4,10 @@ export type Role = 'ADMIN' | 'EMPLOYEE';
 // Auth
 export type LoginDto = { email: string; password: string };
 export type RegisterDto = { email: string; password: string; name: string; role: Role };
-export type LoginResponse = { 
+export type LoginResponse = {
   token?: string;
   access_token?: string; // backend puede devolver access_token o token
-  user?: { 
+  user?: {
     clientId?: string;
     email?: string;
     name?: string;
@@ -16,13 +16,15 @@ export type LoginResponse = {
 }; // bearer token
 
 // Clients
-export type CreateClientDto = { name: string; email: string; phone?: string; clientId?: string };
-export type ClientDto = { 
-  id: string; 
+export type DocumentType = 'CC' | 'TI' | 'PASS';
+export type CreateClientDto = { name: string; email: string; phone?: string; clientId?: string; documentType?: DocumentType };
+export type ClientDto = {
+  id: string;
   clientId?: string;
-  name: string; 
-  email: string; 
-  phone?: string; 
+  name: string;
+  email: string;
+  phone?: string;
+  documentType?: DocumentType;
   createdAt: string;
   updatedAt?: string;
   isDeleted?: boolean;

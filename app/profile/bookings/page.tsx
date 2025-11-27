@@ -1,22 +1,65 @@
 "use client";
 
+import { useState } from "react";
 import { useBookingsStore } from "@/lib/bookings-store";
 import { useAuthStore } from "@/lib/auth-store";
 // import { useReservations } from "@/lib/hooks/useReservations"; // Deshabilitado: servicios externos
 import { useLanguageStore } from "@/lib/store";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/(ui)/card";
 import { Badge } from "@/components/(ui)/badge";
+import { Button } from "@/components/(ui)/button";
 import { Skeleton } from "@/components/(ui)/skeleton";
-import { Calendar, MapPin, Hotel as HotelIcon, DollarSign, Plane, Users } from "lucide-react";
+import { Calendar, MapPin, Hotel as HotelIcon, DollarSign, Plane, Users, XCircle, RefreshCcw } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { CancelBookingModal } from "@/components/(profile)/cancel-booking-modal";
+import { toast } from "sonner";
 
 export default function BookingsPage() {
-    const { bookings: localBookings, flightBookings: localFlightBookings } = useBookingsStore();
+    const { bookings: localBookings, flightBookings: localFlightBookings, cancelBooking, cancelFlightBooking, requestRefund, requestFlightRefund } = useBookingsStore();
     const { clientId } = useAuthStore();
     // const { data: backendReservations, isLoading, error } = useReservations(clientId); // Deshabilitado: servicios externos
     const { locale } = useLanguageStore();
     const t = (esStr: string, enStr: string) => (locale === "es" ? esStr : enStr);
+
+    const [cancelModalOpen, setCancelModalOpen] = useState(false);
+    const [selectedBooking, setSelectedBooking] = useState<{ id: string; name: string; type: "hotel" | "flight" } | null>(null);
+
+    const handleCancelClick = (id: string, name: string, type: "hotel" | "flight") => {
+        setSelectedBooking({ id, name, type });
+        setCancelModalOpen(true);
+    };
+
+    const handleCancelConfirm = async (requestRefundOption: boolean, reason?: string) => {
+        if (!selectedBooking) return;
+
+        if (selectedBooking.type === "hotel") {
+            cancelBooking(selectedBooking.id);
+            if (requestRefundOption) {
+                requestRefund(selectedBooking.id, reason);
+            }
+        } else {
+            cancelFlightBooking(selectedBooking.id);
+            if (requestRefundOption) {
+                requestFlightRefund(selectedBooking.id, reason);
+            }
+        }
+
+        toast.success(
+            requestRefundOption
+                ? t("Reserva cancelada y reembolso solicitado", "Booking cancelled and refund requested")
+                : t("Reserva cancelada exitosamente", "Booking cancelled successfully")
+        );
+    };
+
+    const handleRefundRequest = (id: string, type: "hotel" | "flight") => {
+        if (type === "hotel") {
+            requestRefund(id);
+        } else {
+            requestFlightRefund(id);
+        }
+        toast.success(t("Solicitud de reembolso enviada", "Refund request submitted"));
+    };
 
     const formatDate = (dateStr: string) => {
         try {
@@ -56,7 +99,7 @@ export default function BookingsPage() {
                     )}
                 </p>
             </div>
-            
+
             <div className="space-y-4">
                 {!hasBookings ? (
                     <div className="text-center py-10 text-muted-foreground">
@@ -115,10 +158,49 @@ export default function BookingsPage() {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {booking.refundRequested && (
+                                        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                            <p className="text-sm text-blue-800 flex items-center gap-2">
+                                                <RefreshCcw className="h-4 w-4" />
+                                                <strong>{t("Reembolso solicitado", "Refund requested")}</strong>
+                                            </p>
+                                            {booking.refundReason && (
+                                                <p className="text-sm text-blue-700 mt-1 ml-6">
+                                                    {booking.refundReason}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-2 mt-4 pt-4 border-t">
+                                        {booking.status === 'confirmed' && (
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleCancelClick(booking.id, booking.hotel.nombre, "hotel")}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <XCircle className="h-4 w-4" />
+                                                {t("Cancelar Reserva", "Cancel Booking")}
+                                            </Button>
+                                        )}
+                                        {booking.status === 'cancelled' && !booking.refundRequested && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleRefundRequest(booking.id, "hotel")}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <RefreshCcw className="h-4 w-4" />
+                                                {t("Solicitar Reembolso", "Request Refund")}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))}
-                        
+
                         {/* Flight bookings */}
                         {localFlightBookings.map((booking) => (
                             <Card key={booking.id}>
@@ -172,12 +254,61 @@ export default function BookingsPage() {
                                             </div>
                                         </div>
                                     </div>
+
+                                    {booking.refundRequested && (
+                                        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                            <p className="text-sm text-blue-800 flex items-center gap-2">
+                                                <RefreshCcw className="h-4 w-4" />
+                                                <strong>{t("Reembolso solicitado", "Refund requested")}</strong>
+                                            </p>
+                                            {booking.refundReason && (
+                                                <p className="text-sm text-blue-700 mt-1 ml-6">
+                                                    {booking.refundReason}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-2 mt-4 pt-4 border-t">
+                                        {booking.status === 'confirmed' && (
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleCancelClick(booking.id, booking.flight.airline, "flight")}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <XCircle className="h-4 w-4" />
+                                                {t("Cancelar Reserva", "Cancel Booking")}
+                                            </Button>
+                                        )}
+                                        {booking.status === 'cancelled' && !booking.refundRequested && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleRefundRequest(booking.id, "flight")}
+                                                className="flex items-center gap-2"
+                                            >
+                                                <RefreshCcw className="h-4 w-4" />
+                                                {t("Solicitar Reembolso", "Request Refund")}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         ))}
                     </>
                 )}
             </div>
+
+            {selectedBooking && (
+                <CancelBookingModal
+                    open={cancelModalOpen}
+                    onClose={() => setCancelModalOpen(false)}
+                    onConfirm={handleCancelConfirm}
+                    bookingType={selectedBooking.type}
+                    bookingName={selectedBooking.name}
+                />
+            )}
         </div>
     );
 }
