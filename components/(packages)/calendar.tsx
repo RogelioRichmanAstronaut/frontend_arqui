@@ -59,7 +59,8 @@ export function DateRangePicker({ isOpen, onToggle }: DateRangePickerProps) {
       setSelectedStartDate(clickedDate);
       setSelectedEndDate(null);
       setDates(clickedDate.toISOString(), null);
-    } else if (clickedDate > selectedStartDate) {
+    } else if (clickedDate >= selectedStartDate) {
+      // Permite mismo día para vuelos ida y vuelta el mismo día
       setSelectedEndDate(clickedDate);
       setDates(selectedStartDate.toISOString(), clickedDate.toISOString());
       onToggle(); // cerrar cuando se elige rango

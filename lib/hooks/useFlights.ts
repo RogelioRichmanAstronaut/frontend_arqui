@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { bookings } from '../api/bookings';
+import { catalog, type City } from '../api/catalog';
 import type { AirSearchRequest } from '../api/bookings';
 
 export type AirlineSearchRequest = {
@@ -27,94 +28,95 @@ export type FlightResult = {
   }>;
 };
 
-// Mapeo de nombres de ciudad a códigos IATA
-const CITY_TO_IATA: Record<string, string> = {
-  'bogota': 'BOG', 'bogotá': 'BOG',
-  'medellin': 'MDE', 'medellín': 'MDE',
-  'cali': 'CLO',
-  'barranquilla': 'BAQ',
-  'cartagena': 'CTG',
-  'santa marta': 'SMR',
-  'bucaramanga': 'BGA',
-  'pereira': 'PEI',
-  'cucuta': 'CUC', 'cúcuta': 'CUC',
-  'manizales': 'MZL',
-  'armenia': 'AXM',
-  'pasto': 'PSO',
-  'monteria': 'MTR', 'montería': 'MTR',
-  'neiva': 'NVA',
-  'villavicencio': 'VVC',
-  'ibague': 'IBE', 'ibagué': 'IBE',
-  'valledupar': 'VUP',
-  'riohacha': 'RCH',
-  'quibdo': 'UIB', 'quibdó': 'UIB',
-  'leticia': 'LET',
-  'san andres': 'ADZ', 'san andrés': 'ADZ',
-};
+// Construir mapeos dinámicos desde el catálogo de ciudades
+function buildCityMaps(cities: City[]): { iataMap: Record<string, string>; nameMap: Record<string, string> } {
+  const iataMap: Record<string, string> = {};
+  const nameMap: Record<string, string> = {};
 
-// Extraer código IATA limpio de diferentes formatos
-// "BOG" → "BOG"
-// "CO-BOG" → "BOG"  
-// "BOG - Bogotá" → "BOG"
-// "CO-BOG - Bogotá" → "BOG"
-// "Bogotá, Colombia" → "BOG"
-// "CO-Bogotá, Colombia" → "BOG"
-function extractCityCode(input: string): string {
-  if (!input) return 'BOG';
+  for (const city of cities) {
+    // Mapeo IATA → CityID (ej: "MAD" → "ES-MAD")
+    if (city.iataCode) {
+      iataMap[city.iataCode.toUpperCase()] = city.id;
+    }
+    // Mapeo nombre → CityID (ej: "madrid" → "ES-MAD")
+    if (city.name) {
+      nameMap[city.name.toLowerCase()] = city.id;
+      // También sin acentos
+      const normalized = city.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      nameMap[normalized] = city.id;
+    }
+  }
+
+  return { iataMap, nameMap };
+}
+
+/**
+ * Normalizar input a CityID ISO 3166-2 (XX-YYY) usando el catálogo dinámico
+ * 
+ * Soporta múltiples formatos:
+ *   - CityID completo: "ES-MAD" → "ES-MAD"
+ *   - Solo código IATA: "BOG" → "CO-BOG"
+ *   - Con display: "MAD - Madrid" → "ES-MAD"
+ *   - Nombre de ciudad: "Madrid" → "ES-MAD"
+ */
+function normalizeToCityId(
+  input: string,
+  iataMap: Record<string, string>,
+  nameMap: Record<string, string>
+): string {
+  if (!input) return 'CO-BOG';
   
   const cleaned = input.trim();
   
-  // Caso 1: Ya es código ISO completo exacto (CO-BOG)
-  const isoMatch = cleaned.match(/^CO-([A-Z]{3})(?:\s|$|-)/i);
-  if (isoMatch) {
-    return isoMatch[1].toUpperCase();
-  }
-  
-  // Caso 2: Solo código IATA (BOG, MDE, etc.)
-  if (cleaned.match(/^[A-Z]{3}$/i)) {
+  // Caso 1: Ya es CityID válido (XX-YYY)
+  if (cleaned.match(/^[A-Z]{2}-[A-Z]{2,4}$/i)) {
     return cleaned.toUpperCase();
   }
   
-  // Caso 3: Código con nombre "BOG - Bogotá"
-  const codeWithName = cleaned.match(/^([A-Z]{3})\s*-/i);
-  if (codeWithName) {
-    return codeWithName[1].toUpperCase();
+  // Caso 2: Solo código IATA de 3 letras
+  if (cleaned.match(/^[A-Z]{3}$/i)) {
+    const iata = cleaned.toUpperCase();
+    return iataMap[iata] || `CO-${iata}`;
   }
   
-  // Caso 4: Buscar nombre de ciudad en el texto
-  // Limpiar: remover "CO-", comas, y palabras extra
+  // Caso 3: Código IATA con nombre "BOG - Bogotá" o "MAD - Madrid"
+  const codeWithName = cleaned.match(/^([A-Z]{3})\s*-\s*(.+)/i);
+  if (codeWithName) {
+    const iata = codeWithName[1].toUpperCase();
+    return iataMap[iata] || `CO-${iata}`;
+  }
+  
+  // Caso 4: Buscar nombre de ciudad completo
   const textForSearch = cleaned
-    .replace(/^CO-/i, '')
-    .split(',')[0]
-    .split('-')[0]
-    .trim()
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, ''); // Remover acentos
+    .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+    .replace(/,.*$/, '') // Remover después de coma
+    .trim();
   
-  // Buscar en el mapeo
-  for (const [cityName, code] of Object.entries(CITY_TO_IATA)) {
-    const normalizedCity = cityName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (textForSearch.includes(normalizedCity) || normalizedCity.includes(textForSearch)) {
-      return code;
-    }
+  if (nameMap[textForSearch]) {
+    return nameMap[textForSearch];
   }
   
-  // Fallback: BOG
-  console.warn(`[extractCityCode] No se pudo extraer código de: "${input}", usando BOG`);
-  return 'BOG';
+  // Fallback: Bogotá
+  console.warn(`[normalizeToCityId] No se pudo normalizar: "${input}", usando CO-BOG`);
+  return 'CO-BOG';
 }
 
 export function useFlightSearch(params: AirlineSearchRequest, enabled: boolean = false) {
   return useQuery({
     queryKey: ['flights', 'search', params],
     queryFn: async () => {
-      // Extraer códigos limpios y construir formato ISO 3166-2
-      const originCode = extractCityCode(params.origin);
-      const destCode = extractCityCode(params.destination);
+      // Obtener catálogo de ciudades para mapeo dinámico
+      const cities = await catalog.getCities();
+      const { iataMap, nameMap } = buildCityMaps(cities);
+
+      // Normalizar a CityID ISO 3166-2 (ej: ES-MAD, CO-BOG)
+      const originCityId = normalizeToCityId(params.origin, iataMap, nameMap);
+      const destCityId = normalizeToCityId(params.destination, iataMap, nameMap);
       
       // Validar que origen y destino sean diferentes
-      if (originCode === destCode) {
+      if (originCityId === destCityId) {
         throw new Error('El origen y destino no pueden ser la misma ciudad');
       }
       
@@ -129,8 +131,8 @@ export function useFlightSearch(params: AirlineSearchRequest, enabled: boolean =
       };
 
       const backendParams: AirSearchRequest = {
-        originCityId: `CO-${originCode}`,
-        destinationCityId: `CO-${destCode}`,
+        originCityId,      // Ya es ISO 3166-2: ES-MAD, CO-BOG, etc.
+        destinationCityId: destCityId,
         departureAt: formatDate(params.departureDate),
         returnAt: formatDate(params.returnDate),
         passengers: params.passengers,
